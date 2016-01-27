@@ -48,7 +48,7 @@ grunt
 
 Cómo realizar cambios
 -----
-Si se realizan cambios en los archivos `.less` o `.js` puede utilizarse la tarea watch para faciliar la compilación:
+Si se realizan cambios en los archivos `.less` o `.js` puede utilizarse la tarea watch para facilitar la compilación:
 ```bash
 grunt watch
 ```
