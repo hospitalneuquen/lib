@@ -1,4 +1,6 @@
 module.exports = function(grunt) {
+    // Permite observar cambios en archivos
+    grunt.loadNpmTasks('grunt-contrib-watch');
     // Permite concatenar archivos
     grunt.loadNpmTasks('grunt-contrib-concat');
     // Compilar LESS
@@ -7,6 +9,16 @@ module.exports = function(grunt) {
     grunt.registerTask('default', ['concat:js', 'less:global', 'less:cosmo', 'concat:cosmo']);
 
     grunt.initConfig({
+        // Configuración de watch
+        watch: {
+            scripts: {
+                files: ['**/*'],
+                tasks: ['default'],
+                options: {
+                    spawn: false,
+                },
+            },
+        },
         // Configuración de la tarea grunt-contrib-concat
         concat: {
             options: {
