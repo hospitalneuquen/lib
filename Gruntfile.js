@@ -9,7 +9,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Orden de las tareas
-    grunt.registerTask('default', ['concat:js', 'less:global', 'less:cosmo', 'concat:cosmo']);
+    grunt.registerTask('default', ['concat:js', 'less:global', 'less:fontawesome', 'less:cosmo', 'concat:cosmo', 'copy']);
 
     grunt.initConfig({
         // Configuración de watch
@@ -121,7 +121,7 @@ module.exports = function(grunt) {
                     'css/src/bootswatch/cosmo/build.css',
                     'css/src/webfont-medical-icons/wfmi-style.css',
                     'bower_components/angular-motion/dist/angular-motion.css',
-                    'bower_components/font-awesome/css/font-awesome.css',
+                    '.tmp/font-awesome.css',
                     'js/src/plex/lib/textangular/textAngular.css',
                 ],
                 dest: 'css/dist/lib.cosmo.css',
@@ -135,6 +135,17 @@ module.exports = function(grunt) {
                     dest: 'css/src/plex/global.css'
                 }]
             },
+            fontawesome: {
+                files: [{
+                    src: ['bower_components/font-awesome/less/font-awesome.less'],
+                    dest: '.tmp/font-awesome.css'
+                }],
+                options: {
+                    modifyVars: {
+                        'fa-font-path': '"fonts"',
+                    }
+                },
+            },
             cosmo: {
                 files: [{
                     src: ['css/src/bootswatch/cosmo/build.less'],
@@ -146,6 +157,12 @@ module.exports = function(grunt) {
         copy: {
             medical: {
                 cwd: 'css/src/webfont-medical-icons/fonts', // set working folder / root to copy
+                src: '**/*', // copy all files and subfolders
+                dest: 'css/dist/fonts', // destination folder
+                expand: true // required when using cwd
+            },
+            fontawesome: {
+                cwd: 'bower_components/font-awesome/fonts', // set working folder / root to copy
                 src: '**/*', // copy all files and subfolders
                 dest: 'css/dist/fonts', // destination folder
                 expand: true // required when using cwd

@@ -64334,9 +64334,9 @@ var requiredModules = [
     'plex'
 ];
 
-// Crea el módulo principal de la aplicación (appModule)
+// Crea el módulo principal de la aplicación (app)
 angular
-    .module('appModule', requiredModules)
+    .module('app', requiredModules)
     .config(['$locationProvider', '$httpProvider', '$dropdownProvider', '$buttonProvider', '$provide', function ($locationProvider, $httpProvider, $dropdownProvider, $buttonProvider, $provide) {
         // Habilitar la siguiente linea para usar paths 'app/url' en vez de 'app#url'
         // 21/02/2014 | jgabriel | Deshabilito html5Mode porque causa problemas en tablets y móviles

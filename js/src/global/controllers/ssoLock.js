@@ -9,7 +9,7 @@ appModule.controller('/Lib/Controllers/SSO/Lock', ['$scope', 'SSO', function ($s
         unlock: function () {
             $scope.$broadcast('$plex-before-submit', this.form);
             if (this.form.$valid)
-                // El servicio SSO hace un broadcast con el evento indicando que se desbloqueó (i.e. así Plex actualiza la UI)
+                // El servicio SSO hace un broadcast con el evento indicando que se desbloqueÃ³ (i.e. de esta manera Plex actualiza la UI)
                 SSO.unlock(this.password).catch(function () {
                     $scope.error = true;
                     $scope.password = null;
