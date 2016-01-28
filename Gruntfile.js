@@ -3,8 +3,11 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     // Permite concatenar archivos
     grunt.loadNpmTasks('grunt-contrib-concat');
-    // Compilar LESS
+    // Permite compilar LESS
     grunt.loadNpmTasks('grunt-contrib-less');
+    // Permite copiar archivos
+    grunt.loadNpmTasks('grunt-contrib-copy');
+
     // Orden de las tareas
     grunt.registerTask('default', ['concat:js', 'less:global', 'less:cosmo', 'concat:cosmo']);
 
@@ -137,6 +140,21 @@ module.exports = function(grunt) {
                     src: ['css/src/bootswatch/cosmo/build.less'],
                     dest: 'css/src/bootswatch/cosmo/build.css'
                 }]
+            }
+        },
+        // Configuración de la tarea copy
+        copy: {
+            medical: {
+                cwd: 'css/src/webfont-medical-icons/fonts', // set working folder / root to copy
+                src: '**/*', // copy all files and subfolders
+                dest: 'css/dist/fonts', // destination folder
+                expand: true // required when using cwd
+            },
+            cosmo: {
+                cwd: 'css/src/bootswatch/cosmo/fonts', // set working folder / root to copy
+                src: '**/*', // copy all files and subfolders
+                dest: 'css/dist/fonts', // destination folder
+                expand: true // required when using cwd
             }
         }
     });

@@ -40,6 +40,7 @@ npm install
 ```bash
 bower install
 ```
+Si surgen problemas al instalar estas dependencias, leer http://stackoverflow.com/questions/15669091/bower-install-using-only-https
 
 5. Compilar la librería
 ```bash
