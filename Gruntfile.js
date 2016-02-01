@@ -73,6 +73,7 @@ module.exports = function(grunt) {
                     // Global
                     'js/src/global/modules/Global.js',
                     'js/src/global/services/Global.js',
+                    'js/src/global/services/Session.js',
                     'js/src/global/services/SSO.js',
                     'js/src/global/services/Server.js',
 

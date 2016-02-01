@@ -1,11 +1,16 @@
-﻿
 'use strict';
 
-// 07/08/2015 | jgabriel | No puede usar el servicio Server porque si no se crea la referencia circular Server <- SSO <- Plex
-angular.module('global').factory('SSO', ['$rootScope', '$http', '$timeout', function($rootScope, $http, $timeout) {
+/**
+ * @ngdoc service
+ * @module app
+ * @name SSO
+ * @description
+ * Servicio de autenticación y manejo de la sesión con SSO
+ **/
+ angular.module('global').factory('SSO', ['$rootScope', '$http', '$timeout', function($rootScope, $http, $timeout) {
     var self = {
         _initCache: null,
-        session: null,
+        session: null,    
         init: function() {
             if (!self._initCache)
                 self._initCache = $http.get('/api/sso/sessions/current').then(function(response) {

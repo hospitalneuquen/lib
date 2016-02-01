@@ -110,11 +110,12 @@ angular
                 return data;
         });
     }])
-    .run(['$rootScope', 'Global', 'Plex', function ($rootScope, Global, Plex) {
+    .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {
             currentTheme: 'cosmo',
             // Acceso global a servicios
             Global: Global,
             Plex: Plex,
+            Session: Session,
         });
     }]);
