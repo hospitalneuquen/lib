@@ -85,30 +85,7 @@ angular
             else {
                 return data;
             }
-        })
-
-        $httpProvider.defaults.transformRequest.unshift(function (data) {
-            // Convierte objetos Date en formato .NET
-            var rvalidchars = /^[\],:{}\s]*$/;
-            var rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;
-            var rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;
-            var rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
-            var dateISO = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:[.,]\d+)?Z/i;
-            var dateNet = /\/Date\((-?\d+)(?:-\d+)?\)\//i;
-
-            var replacer = function (key, value) {
-                if (key && angular.isObject(this) && angular.isDate(this[key])) {
-                    return "/Date(" + this[key].getTime() + "-0000)/"
-                }
-                else
-                    return value;
-            };
-
-            if (data && angular.isObject(data))
-                return window.JSON.stringify(data, replacer);
-            else
-                return data;
-        });
+        })        
     }])
     .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {
