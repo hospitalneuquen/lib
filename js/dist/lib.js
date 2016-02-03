@@ -52961,27 +52961,6 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
                 .error(function (response) { return self.onError(response, config.updateUI) })
                 .then(function (response) { return self.onThen(response) })
         },
-        patch: function (url, data, config) {
-            // Prepara configuración
-            config = angular.extend({
-                updateUI: "small",
-                method: "PATCH",
-                data: data,
-                url: url
-            }, config);
-
-
-            // Actualiza UI
-            if (config.updateUI)
-                Plex.loading.update(true, config.updateUI == "big");
-
-            // Envía el request
-            var self = this;
-            return $http.execute(config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
-        },
         post: function (url, data, config) {
             // Prepara configuración
             config = angular.extend({
@@ -53011,6 +52990,23 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
 
             var self = this;
             return $http.post(url, data, config)
+                .success(function (response) { return self.onSuccess(response, config.updateUI) })
+                .error(function (response) { return self.onError(response, config.updateUI) })
+                .then(function (response) { return self.onThen(response) })
+        },
+        patch: function (url, data, config) {
+            // Prepara configuración
+            config = angular.extend({
+                updateUI: "small"
+            }, config);
+
+            // Actualiza UI
+            if (config.updateUI)
+                Plex.loading.update(true, config.updateUI == "big");
+
+            // Envía el request
+            var self = this;
+            return $http.patch(url, data, config)
                 .success(function (response) { return self.onSuccess(response, config.updateUI) })
                 .error(function (response) { return self.onError(response, config.updateUI) })
                 .then(function (response) { return self.onThen(response) })
@@ -64506,30 +64502,7 @@ angular
             else {
                 return data;
             }
-        })
-
-        // $httpProvider.defaults.transformRequest.unshift(function (data) {
-        //     // Convierte objetos Date en formato .NET
-        //     var rvalidchars = /^[\],:{}\s]*$/;
-        //     var rvalidescape = /\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g;
-        //     var rvalidtokens = /"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g;
-        //     var rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g;
-        //     var dateISO = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:[.,]\d+)?Z/i;
-        //     var dateNet = /\/Date\((-?\d+)(?:-\d+)?\)\//i;
-        //
-        //     var replacer = function (key, value) {
-        //         if (key && angular.isObject(this) && angular.isDate(this[key])) {
-        //             return "/Date(" + this[key].getTime() + "-0000)/"
-        //         }
-        //         else
-        //             return value;
-        //     };
-        //
-        //     if (data && angular.isObject(data))
-        //         return window.JSON.stringify(data, replacer);
-        //     else
-        //         return data;
-        // });
+        })        
     }])
     .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {
