@@ -11,11 +11,11 @@ Prerequisitos
 * [Node.JS](https://nodejs.org/en/download/)
 * Instalar Bower
 ```bash
-npm install bower
+npm install -g bower
 ```
 * Instalar grunt
 ```bash
-npm install grunt
+npm install -g grunt-cli
 ```
 
 Cómo compilar
