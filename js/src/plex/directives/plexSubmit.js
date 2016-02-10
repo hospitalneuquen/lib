@@ -1,5 +1,14 @@
 ﻿'use strict';
 
+
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-submit
+ * @description
+ * Emite un evento ```$plex-before-submit``` para indicar a la directiva {@link module:plex.directive:plex} que valide el modelo asociado.
+ * @restrict A
+ **/
 angular.module('plex').directive("plexSubmit", ["$parse", function ($parse) {
     return {
         restrict: "A",

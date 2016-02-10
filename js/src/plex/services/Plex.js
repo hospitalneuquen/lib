@@ -1,5 +1,14 @@
 ﻿'use strict';
 
+/**
+ *
+ * @ngdoc service
+ * @module plex
+ * @name Plex
+ * @description
+ * Permite interactuar con la UI
+ *
+ **/
 angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "SSO", function ($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, SSO) {
     var self = {
         /*
@@ -197,16 +206,49 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             else
                 return true;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showError
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra un mensaje de error.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showError("El dato ingresado es incorrecto")
+         **/
         showError: function (message) {
             if (!message)
                 message = "No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...";
             self.error.title = message;
             self.error.show = true;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showWarning
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra una advertencia.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showWarning("El dato ingresado es incorrecto")
+         **/
         showWarning: function (message) {
             self.warning.title = message;
             self.warning.show = true;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showInfo
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra un mensaje de información.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showInfo("El dato ingresado es incorrecto")
+         **/
         showInfo: function (message) {
             self.info.title = message;
             self.info.show = true;
@@ -238,6 +280,18 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 return angular.isNumber(self.currentViewIndex) ? self.viewStack[self.currentViewIndex] : null;
             }
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#openView
+         * @param {String} path Ruta
+         * @return {Promise} promise Resuelve cuando se llama el método ```Plex.closeView()``` o el usuario hace click en el botón *atrás* del browser
+         * @description Permite cargar una vista y un controlador asociados.
+         *
+         * Ejemplo:
+         *
+         *      Plex.openView("/myRoute").then(function(returnValue) { ... })
+         **/
         openView: function (path) {
             console.log(path);
             var deferred = $q.defer();
@@ -252,6 +306,17 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             });
             return deferred.promise;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#closeView
+         * @param {Object=} returnValue Objeto que se devuelve a openView
+         * @description Cierra la vista actual y resuelve la promise abierta en ```Plex.openView()```
+         *
+         * Ejemplo:
+         *
+         *      Plex.closeView(true);
+         **/
         closeView: function (returnValue) {
             //if (self.currentViewIndex > 0) {
             //    var view = self.currentView();
@@ -285,6 +350,32 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                     self.actions.push(a);
             });
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#initView
+         * @param {settings=} settings Objeto conteniendo uno o más parámetros para inicializar la vista
+         *   - **title**: Título
+         *   - **subtitle**: Subtítulo
+         *   - **actions**: Array de acciones con las siguientes opciones
+         *      - *title*: Título del ícono
+         *      - *icon*: Icono
+         *      - *handler*: Función a ejecutar cuando se hace clic en el ícono
+         * @description Inicializa la vista actual
+         *
+         * Ejemplo:
+         *
+         Plex.initView({
+                title: "Punto de inicio",
+                actions: [{
+                    title: "Camas",
+                    icon: "fa fa-bed",
+                    handler: function() {
+                        Plex.openView('mapa');
+                    }
+                }]
+            });
+         **/
         initView: function (settings) {
             // Esta función es llamada por el controlador para inicializar la vista
             var currentView = self.currentView();

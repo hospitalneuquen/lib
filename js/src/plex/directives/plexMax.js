@@ -1,5 +1,21 @@
 ﻿'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-max
+ * @description
+ * Agrega un validador de valor máximo. Requiere la directiva {@link module:plex.directive:plex}.
+ * @priority 599
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor mayor a 5 para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex="int" plex-max="5" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMax', function () {
     return {
         restrict: 'A',

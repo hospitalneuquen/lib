@@ -1,5 +1,15 @@
 ﻿'use strict';
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-form
+ * @description
+ * Muestra un botón de Guardar y otro de Cancelar asociados a dos funciones. El botón Guardar se habilita sólo cuando formulario es válido.
+ *
+ * Este directiva será reemplazada por {@link module:plex.directive:plex-submit}.
+ * @restrict A
+ **/
 angular.module('plex').directive("plexForm", ["Plex", function (Plex) {
     return {
         restrict: "A",

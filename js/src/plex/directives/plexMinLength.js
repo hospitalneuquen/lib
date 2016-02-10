@@ -1,5 +1,20 @@
 ﻿'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-minlength
+ * @description
+ * Agrega un validador de largo mínimo de cadena de texto. Requiere la directiva {@link module:plex.directive:plex}.
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor texto de menos de tres caracteres para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex plex-minlength="3" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMinlength', function () {
     return {
         restrict: 'A',

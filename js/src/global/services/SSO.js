@@ -2,7 +2,7 @@
 
 /**
  * @ngdoc service
- * @module app
+ * @module global
  * @name SSO
  * @description
  * Servicio de autenticación y manejo de la sesión con SSO
@@ -10,7 +10,7 @@
  angular.module('global').factory('SSO', ['$rootScope', '$http', '$timeout', function($rootScope, $http, $timeout) {
     var self = {
         _initCache: null,
-        session: null,    
+        session: null,
         init: function() {
             if (!self._initCache)
                 self._initCache = $http.get('/api/sso/sessions/current').then(function(response) {

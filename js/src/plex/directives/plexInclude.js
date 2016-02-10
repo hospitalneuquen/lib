@@ -1,3 +1,23 @@
+'use strict';
+
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-include
+ * @description
+ * Permite incluir vistas parciales al igual que ```ng-include``` pero permitiendo pasar parámetros.
+ * @param {string=} plex-include-miParametro Define la propiedad include.miParametro con el valor pasado en ```$scope```
+ *
+ * Por ejemplo
+ *
+ *     <div plex-include="'miArchivo.html'" plex-include-numero="5" plex-include-texto="miPropiedad"></div>
+ *
+ * permite al controlador referenciado en *miArchivo.html* acceder a
+ *
+ *     $scope.include.numero
+ *     $scope.include.texto
+ *
+**/
 ﻿angular.module('plex').directive('plexInclude', function () {
     return {
         scope: true,

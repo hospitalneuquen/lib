@@ -53,3 +53,32 @@ Si se realizan cambios en los archivos `.less` o `.js` puede utilizarse la tarea
 ```bash
 grunt watch
 ```
+
+Generar documentación
+---
+
+Documentar los componentes Angular utilizando [ng-doc](https://github.com/angular/angular.js/wiki/Writing-AngularJS-Documentation).
+
+La primera vez preparar el proyecto:
+
+```bash
+cd docs
+bower install
+
+cd docs
+bower install
+npm install
+```
+
+Compilar con gulp:
+
+```bash
+cd docs\docs
+gulp
+```
+
+Para facilitar las tareas de documentación puede iniciarse un servidor local que utiliza [BrowserSync](https://www.browsersync.io/):
+```bash
+cd docs\docs
+gulp docs:serve
+```
