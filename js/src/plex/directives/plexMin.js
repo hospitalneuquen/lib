@@ -1,5 +1,21 @@
 ﻿'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-min
+ * @description
+ * Agrega un validador de valor mínimo. Requiere la directiva {@link module:plex.directive:plex}.
+ * @priority 599
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor menor a 5 para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex="int" plex-min="5" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMin', function () {
     return {
         restrict: 'A',

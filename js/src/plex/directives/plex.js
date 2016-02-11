@@ -1,32 +1,74 @@
-﻿'use strict'
+﻿
+'use strict'
 
-angular.module('plex').directive("plex", ['$injector', function ($injector) {
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex
+ * @description
+ * Decora un ```input[type=text]``` de acuerdo al tipo de datos y agrega validación de Angular + Bootstrap
+ * El tipo de datos puede ser:
+ * - **text**: Valor por defecto.
+ * - **html**: Decora el campo con un editor HTML. Actualmente funciona como adaptador de la directiva ```text-angular``` (https://github.com/fraywing/textAngular).
+ * - **int**: Permite sólo valores numéricos enteros.
+ * - **float**: Permite sólo valores numéricos enteros o decimales.
+ * - **date**: Decora el campo con un selector de fecha. Actualmente funciona como adaptador de la directiva ```bs-datepicker``` (http://mgcrea.github.io/angular-strap/#/datepickers).
+ * - **time**: Decora el campo con un selector de hora. Actualmente funciona como adaptador de la directiva ```bs-timepicker``` (http://mgcrea.github.io/angular-strap/#/timepickers).
+ * - **bool**: Decora el campo con un slider booleano. **ATENCIÓN: ¡Actualmente no funciona con la última versión de Angular!
+ * - Si no es ninguno de los tipos de datos anteriores, asume que es un {@link module:plex.directive:plex-select}.
+ *
+ * @priority 598
+ * @restrict EAC
+ * @param {string=} label Agrega un elemento **<label>** antes del campo de texto
+ * @param {string=} hint Agrega un bloque de ayuda debajo del campo de texto
+ * @param {string=} prefix Agrega un prefijo antes del campo de texto
+ * @param {string=} suffix Agrega un sufijo después del campo de texto
+ * @param {boolean=} selectOnly *Sólo válida para tipo de datos ```date```*. Muestra sólo el selector y no permite escribir.
+ * @param {string=} date-format *Sólo válida para tipo de datos ```date```*. Formato de la fecha a mostrar. Para más opciones leer la documentación de http://mgcrea.github.io/angular-strap/#/datepickers
+ * @param {string=} true *Sólo válida para tipo de datos ```bool```*. Texto a mostrar para el valor ```true``` ("Si" por defecto)
+ * @param {string=} false *Sólo válida para tipo de datos ```bool```*. Texto a mostrar para el valor ```false``` ("No" por defecto)
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <div class="row">
+            <div class="col-xs-6"><input type="text" label="Ingrese nombre de la persona" ng-model="persona.nombre" plex /></div>
+            <div class="col-xs-6"><input type="text" label="Fecha de nacimiento" ng-model="persona.nacimiento" plex="date" /></div>
+        </div>
+        <div class="row">
+            <div class="col-xs-6"><input type="text" label="Altura" ng-model="persona.altura" plex="float" suffix="Mts" /></div>
+            <div class="col-xs-6"><input type="text" label="¿Tiene obra social?" ng-model="persona.obraSocial" plex="bool" /></div>
+        </div>
+        <pre ng-show="persona">{{persona | json}}</pre>
+      </file>
+    </example>
+ **/
+angular.module('plex').directive("plex", ['$injector', function($injector) {
     return {
         restrict: 'EAC',
         require: ['?ngModel', '^?form'],
         priority: 598, // Para que el postLink ejecute último. ng-if tiene prioridad 600
-        compile: function (element, attrs) {
+        compile: function(element, attrs) {
             // Determina el tipo
             var type = attrs.plex;
             if (type) {
-                if (type != "int" && type != "float" && type != "date" && type != "time" && type != "bool" && type != "html")
+                if (type != "text" && type != "int" && type != "float" && type != "date" && type != "time" && type != "bool" && type != "html")
                     type = "select";
             } else {
                 // 04/08/2014 | jgabriel | Este bloque se mantiene por compatibilidad. En las aplicaciones, cambiar todos los inputs a type='text' y luego borrar este código
                 if (element.is("INPUT[type=date]"))
                     type = "date";
                 else
-                    if (element.is("INPUT[type=time]"))
-                        type = "time";
-                    else
-                        if (element.is("SELECT") || element.is("INPUT[type=select]"))
-                            type = "select";
-                        else
-                            if (element.is("INPUT[type=number]"))
-                                type = "int"
-                            else
-                                if (element.is("INPUT[type=hidden]"))
-                                    type = "hidden"
+                if (element.is("INPUT[type=time]"))
+                    type = "time";
+                else
+                if (element.is("SELECT") || element.is("INPUT[type=select]"))
+                    type = "select";
+                else
+                if (element.is("INPUT[type=number]"))
+                    type = "int"
+                else
+                if (element.is("INPUT[type=hidden]"))
+                    type = "hidden"
             }
 
             // Inyecta dinámicamente directivas
@@ -55,7 +97,7 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
             }
 
             return {
-                post: function (scope, element, attrs, controllers) {
+                post: function(scope, element, attrs, controllers) {
                     var modelController = controllers[0];
                     var formController = controllers[1];
                     // Actualiza el DOM
@@ -66,7 +108,7 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                         var label = angular.element("<label>").html(texto); /* Usa \ para dejar un label vacío */
                         // Insert texto "Opcional"
                         if (attrs.ngRequired) {
-                            scope.$watch(attrs.ngRequired, function (current) {
+                            scope.$watch(attrs.ngRequired, function(current) {
                                 if (current === false)
                                     label.html(texto + "<span class='optional text-muted'>(opcional)</span>");
                                 else
@@ -86,14 +128,14 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
 
                     // Visibilidad
                     if (attrs.ngShow)
-                        scope.$watch(attrs.ngShow, function (value) {
+                        scope.$watch(attrs.ngShow, function(value) {
                             if (value)
                                 newParent.show();
                             else
                                 newParent.hide();
                         });
                     if (attrs.ngHide)
-                        scope.$watch(attrs.ngHide, function (value) {
+                        scope.$watch(attrs.ngHide, function(value) {
                             if (value)
                                 newParent.show();
                             else
@@ -101,12 +143,12 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                         });
 
                     // Validación
-                    var validator = function (element, modelController) {
+                    var validator = function(element, modelController) {
                         // Calcula valores
-                        var required = typeof (modelController) != 'undefined' && !modelController.$pristine && modelController.$error.required;
-                        var invalid = typeof (modelController) != 'undefined' && !modelController.$pristine && ((modelController.$error.pattern || modelController.$error.number || modelController.$error.max || modelController.$error.min || modelController.$error.date || modelController.$error.time || modelController.$error.maxlength || modelController.$error.minlength) || false);
+                        var required = typeof(modelController) != 'undefined' && !modelController.$pristine && modelController.$error.required;
+                        var invalid = typeof(modelController) != 'undefined' && !modelController.$pristine && ((modelController.$error.pattern || modelController.$error.number || modelController.$error.max || modelController.$error.min || modelController.$error.date || modelController.$error.time || modelController.$error.maxlength || modelController.$error.minlength) || false);
 
-                        // Muestra/oculta elementos 
+                        // Muestra/oculta elementos
                         var controlGroup = element.parents(".form-group").eq(0);
                         controlGroup.toggleClass("has-error", required || invalid);
                         var spans = controlGroup.find(".help-block");
@@ -115,14 +157,21 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                     }
 
                     if (modelController) {
-                        modelController.$parsers.push(function (value) { validator(element, modelController); return value; });
-                        scope.$watch(function () { return modelController.$error }, function () { validator(element, modelController); }, true);
+                        modelController.$parsers.push(function(value) {
+                            validator(element, modelController);
+                            return value;
+                        });
+                        scope.$watch(function() {
+                            return modelController.$error
+                        }, function() {
+                            validator(element, modelController);
+                        }, true);
                     } else {
                         validator(element);
                     }
 
                     // Cuando se llama a Plex.submitForm();
-                    scope.$on("$plex-before-submit", function (event, submitController) {
+                    scope.$on("$plex-before-submit", function(event, submitController) {
                         modelController.$setDirty();
                         validator(element, modelController);
                         //modelController.$validate();
@@ -136,15 +185,19 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                         case "date":
                             var inputGroup = angular.element("<div class='input-group'>");
                             element.before(inputGroup);
-                            element.detach();                          
+                            element.detach();
                             if (attrs.selectOnly) {
                                 element.attr('readonly', 'readonly');
-                                element.css({ cursor: "pointer" });
-                                element.on('click', function () { $(this).next().find(".btn").click(); });
+                                element.css({
+                                    cursor: "pointer"
+                                });
+                                element.on('click', function() {
+                                    $(this).next().find(".btn").click();
+                                });
                             }
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after($("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='fa fa-calendar'></i></a></span>").on('click', function () {
+                            element.after($("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='fa fa-calendar'></i></a></span>").on('click', function() {
                                 element.removeAttr('readonly');
                                 element.focus();
                                 element.attr('readonly', 'readonly');
@@ -152,7 +205,7 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
 
                             // Soluciona el bug de ng-readonly
                             if (attrs.ngReadonly)
-                                scope.$watch(attrs.ngReadonly, function (value) {
+                                scope.$watch(attrs.ngReadonly, function(value) {
                                     if (value)
                                         element.attr("disabled", "disabled")
                                     else
@@ -165,11 +218,13 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                             element.detach();
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after($("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='fa fa-clock-o'></i></a></span>").on('click', function () { element.focus() }));
+                            element.after($("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='fa fa-clock-o'></i></a></span>").on('click', function() {
+                                element.focus()
+                            }));
 
                             // Soluciona el bug de ng-readonly
                             if (attrs.ngReadonly)
-                                scope.$watch(attrs.ngReadonly, function (value) {
+                                scope.$watch(attrs.ngReadonly, function(value) {
                                     if (value)
                                         element.attr("disabled", "disabled")
                                     else
@@ -191,7 +246,7 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
 
                             element.addClass('form-control');
                             // Permite sólo tipear dígitos
-                            var numberParsers = function (value) {
+                            var numberParsers = function(value) {
                                 if (value) {
                                     value = ("" + value).replace(",", ".");
                                     var regEx;
@@ -204,8 +259,7 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                                     if (regEx.test(value)) {
                                         modelController.$setValidity('number', true);
                                         return parseFloat(value, 10);
-                                    }
-                                    else {
+                                    } else {
                                         modelController.$setValidity('number', false);
                                         return null;
                                     }
@@ -221,7 +275,6 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                             element.addClass("form-control select2");
                             break;
                         case "bool":
-                            //debugger;
                             var id = "plex" + Math.floor((1 + Math.random()) * 0x10000);
                             element.attr("id", id);
                             element.attr("type", "checkbox");
@@ -260,12 +313,12 @@ angular.module('plex').directive("plex", ['$injector', function ($injector) {
                         dinamicLink(scope, element, attrs, modelController);
 
                     // Eventos
-                    scope.$on("$plex-before-submit", function (event, submitController) { // Invocado desde Plex.submitForm()
+                    scope.$on("$plex-before-submit", function(event, submitController) { // Invocado desde Plex.submitForm()
                         // Dirty = true (i.e. fuerza que muestre los campos requeridos)
                         if (modelController && formController == submitController)
                             modelController.$setViewValue(modelController.$viewValue);
-                    }); 
-                    element.on("$destroy", function () {
+                    });
+                    element.on("$destroy", function() {
                         if (!element.data("$plex-destroy")) {
                             element.data("$plex-destroy", true);
                             newParent.remove();

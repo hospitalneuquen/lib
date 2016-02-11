@@ -2,7 +2,7 @@
 
 /**
  * @ngdoc service
- * @module app
+ * @module global
  * @name Session
  * @description
  * Servicio de gestión de sesión de usuario. Soporta diferentes tipos de autenticación

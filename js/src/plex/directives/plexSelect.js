@@ -1,5 +1,39 @@
 'use strict';
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-select
+ * @description
+ * Decora un input con una lista de selección. Requiere la directiva {@link module:plex.directive:plex}.
+ *
+ * Pueden utilizarse de dos maneras:
+ *   - &lt;input type="hidden" ```plex="item.nombre for item in opciones"``` &gt;
+ *   - &lt;input type="hidden" ```plex plex-select="item.nombre for item in opciones"``` &gt;
+ * @param {boolean=} multiple Permite seleccionar múltiples items. *Por defecto: false*
+ * @param {number=} timeout Indica el timeout para comenzar a buscar las opciones (muy útil cuando se utilizan promises). *Por defecto: 300*
+ * @param {boolean=} allowClear Indica el timeout para comenzar a buscar las opciones (muy útil cuando se utilizan promises). *Por defecto: 300*
+ * @param {min=} min Indica la cantidad mínima de caracteres para comenzar a buscar. *Por defecto: 0*
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <div ng-controller="ExampleController">
+            <label>Ingrese un valor texto de menos de tres caracteres para mostrar el error</label><br/>
+            <input type="text" ng-model="modelo" plex="item.nombre for item in opciones" />
+            <pre ng-show="modelo">{{modelo | json}}</pre>
+        </div>
+      </file>
+      <file name="main.js">
+        angular.module('app').controller('ExampleController', function($scope){
+            $scope.opciones = [
+                {id: 1, nombre: "Argentina"},
+                {id: 2, nombre: "Brasil"},
+                {id: 3, nombre: "Chile"},
+            ]
+        });
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Global', function ($timeout, $parse, $q, Global) {
     return {
         require: 'ngModel',
@@ -40,7 +74,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                             timer = $timeout(function () {
                                 var locals = { $value: query.term };
                                 $q.when(source(scope, locals)).then(function (matches) {
-                                    // Si "$value" no est� definido en inputExpression, asume que 'matches' equivale a todos los valores sin filtrar (i.e. filtro ac�)
+                                    // Si "$value" no está definido en inputExpression, asume que 'matches' equivale a todos los valores sin filtrar (i.e. filtramos acá)
                                     if (matches && query.term && inputExpression.indexOf("$value") < 0) {
                                         matches = matches.filter(function (i) {
                                             var locals = {};

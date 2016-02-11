@@ -4,6 +4,7 @@ Lib
 Conjunto de librerías para aplicaciones basadas en AngularJS y Bootstrap, que incluye -entre otras-:
 * [AngularJS](github.com/angular/angular.js)
 * [Bootswatch](https://github.com/thomaspark/bootswatch)
+* [Angular-Strap](http://mgcrea.github.io/angular-strap/)
 
 Prerequisitos
 -----
@@ -52,4 +53,33 @@ Cómo realizar cambios
 Si se realizan cambios en los archivos `.less` o `.js` puede utilizarse la tarea watch para facilitar la compilación:
 ```bash
 grunt watch
+```
+
+Generar documentación
+---
+
+Documentar los componentes Angular utilizando [ng-doc](https://github.com/angular/angular.js/wiki/Writing-AngularJS-Documentation).
+
+La primera vez preparar el proyecto:
+
+```bash
+cd docs
+bower install
+
+cd docs
+bower install
+npm install
+```
+
+Compilar con gulp:
+
+```bash
+cd docs\docs
+gulp
+```
+
+Para facilitar las tareas de documentación puede iniciarse un servidor local que utiliza [BrowserSync](https://www.browsersync.io/):
+```bash
+cd docs\docs
+gulp docs:serve
 ```

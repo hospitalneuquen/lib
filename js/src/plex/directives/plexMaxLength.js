@@ -1,5 +1,20 @@
 ﻿'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-maxlength
+ * @description
+ * Agrega un validador de largo máximo de cadena de texto. Requiere la directiva {@link module:plex.directive:plex}.
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor texto de más de tres caracteres para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex plex-maxlength="3" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMaxlength', function () {
     return {
         restrict: 'A',
