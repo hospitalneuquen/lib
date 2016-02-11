@@ -4,6 +4,7 @@ Lib
 Conjunto de librerías para aplicaciones basadas en AngularJS y Bootstrap, que incluye -entre otras-:
 * [AngularJS](github.com/angular/angular.js)
 * [Bootswatch](https://github.com/thomaspark/bootswatch)
+* [Angular-Strap](http://mgcrea.github.io/angular-strap/)
 
 Prerequisitos
 -----

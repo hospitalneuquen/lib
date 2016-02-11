@@ -5,14 +5,14 @@
 @description
 
 <div class="jumbotron">
-	<h1>Hello Docs!</h1>
+	<h1><i class="fa fa-plug"></i><span>LIB</span></h1>
+	<p>Conjunto de librerías para aplicaciones basadas en AngularJS y Bootstrap</p>
 </div>
 
-## Contents
+## Contenido
 
-### API
-<a href="api">here</a>.
+### Servicios y directivas
+<a href="api">Acceso a la documentación</a>
 
-### Guide
-<a href="guide">here</a>.
-
+### Código fuente
+<a href="https://github.com/hospitalneuquen/lib">Proyecto en GitHub</a>
