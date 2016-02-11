@@ -22,29 +22,27 @@ npm install -g grunt-cli
 Cómo compilar
 ------
 1. Crear una nueva carpeta y navegar hasta ella
-```bash
+ ```bash
 md lib
 cd lib
 ```
-
 2. Clonar (descargar) el repositorio
-```bash
+ ```bash
 git clone https://github.com/hospitalneuquen/lib.git
 ```
-
 3. Instalar dependencias de Node
-```bash
+ ```bash
 npm install
 ```
 
 4. Instalar dependencias de Bower
-```bash
+ ```bash
 bower install
 ```
 Si surgen problemas al instalar estas dependencias, leer http://stackoverflow.com/questions/15669091/bower-install-using-only-https
 
 5. Compilar la librería
-```bash
+ ```bash
 grunt
 ```
 
