@@ -52511,130 +52511,285 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 angular.module('global', [])
 'use strict';
 
-angular.module('global').factory('Global', ['$q', function ($q) {
+/**
+ *
+ * @ngdoc service
+ * @module global
+ * @name Global
+ * @description
+ * Funciones reusables para aplicaciones
+ *
+ **/
+angular.module('global').factory('Global', ['$q', function($q) {
     return {
         _initPromises: [],
         _searchCache: [],
-        init: function (promise) {
+        init: function(promise) {
             this._initPromises.push(promise);
         },
         // Este método es llamado por Plex para ver si se han ejecutado todos los bloques de inicialización
-        waitInit: function () {
+        waitInit: function() {
             return $q.all(this._initPromises);
         },
-        // Hace el matching de un texto ignorando acentos
-        matchText: function (term, text) {
-            return Select2.util.stripDiacritics('' + text).toUpperCase().indexOf(Select2.util.stripDiacritics('' + term).toUpperCase()) >= 0;
+
+        /**
+         *
+         * @ngdoc method
+         * @name Global#matchText
+         * @param {String} query Término a buscar
+         * @param {String} text String en donde se buscará el término
+         * @description Devuelve ```true``` si el ```query``` existe en ```text``` ignorando signos diacríticos (acentos, ñ, etc.)
+         *
+         * Ejemplo:
+         *
+         *          Global.matchText("El césped es verde", "cesped") // devuelve true
+         *          Global.matchText("El césped es verde", "rojo") // devuelve false
+         **/
+        matchText: function(text, query) {
+            return Select2.util.stripDiacritics('' + text).toUpperCase().indexOf(Select2.util.stripDiacritics('' + query).toUpperCase()) >= 0;
         },
-        // Espera los resultados de una promise y devuele los items indicados por query. Esta función se usa con plex.select
-        // Parámetros:
-        //      - promise [promise]: Suele ser la promise devuelta por Server.get()
-        //      - query [string | int | array]: indica el Texto, Id o lista de Ids a buscar
-        //      - getTextFunction [function(item)]: indica una función que devuelve el texto de un item. Si no se especifica, utiliza el campo 'nombre'
-        //      - orderBy [string]: indica un campo por el cual se ordenarán los resultados
-        getMatches: function (promise, query, getTextFunction, orderBy) {
+
+        /**
+         *
+         * @ngdoc method
+         * @name Global#getMatches
+         * @param {promise} promise Promise que devuelve un array de objetos
+         * @param {String | Number | Array} query Indica el parámetro para buscar según el tipo de datos:
+         *   - ```String```: Indica el texto a buscar en los objetos utilizando la funcion ```getTextFunction()```
+         *   - ```Number```: Indica un id para buscar en la propiedad ```id``` de los objetos
+         *   - ```Array```: Indica un conjunto de ids para buscar en la propiedad ```id``` de los objetos
+         * @param {promise} getTextFunction Función que permite buscar por un string. Por defecto utiliza el campo 'nombre'.
+         * @param {String} orderBy Indica el nombre de una propiedad por la cual se ordenarán los resultados
+         * @description Espera los resultados de una promise y devuele los items indicados por query
+         **/
+        getMatches: function(promise, query, getTextFunction, orderBy) {
             // Define getTextFunction()
             if (!getTextFunction)
-                getTextFunction = function (item) { return item.nombre };
+                getTextFunction = function(item) {
+                    return item.nombre
+                };
 
             // Matchea items
             if (query) {
                 var self = this;
-                promise = promise.then(function (data) {
+                promise = promise.then(function(data) {
                     // 1º Busca por texto
                     if (angular.isString(query)) {
                         var matches = [];
                         for (var i = 0; i < data.length; i++) {
-                            if (self.matchText(query, getTextFunction(data[i])))
+                            if (self.matchText(getTextFunction(data[i]), query))
                                 matches.push(data[i]);
                         }
                         return matches;
-                    }
-
-                    else
-                        // 2º Buscar [id1, id2] of [{id: ...}, {id: ...}]
-                        if (angular.isArray(query)) {
-                            var matches = [];
-                            for (var j = 0; j < query.length; j++) {
-                                for (var i = 0; i < data.length; i++) {
-                                    if ((angular.isNumber(query[j]) && data[i].id == query[j]) ||
-                                        (angular.isObject(query[j]) && 'id' in query[j] && data[i].id == query[j].id))
-                                        matches.push(data[i]);
-                                }
-                            }
-                            return matches;
-                        }
-
-                        else
-                            // 3º Busca por id o {id: ...}
-                        {
+                    } else
+                    // 2º Buscar [id1, id2] of [{id: ...}, {id: ...}]
+                    if (angular.isArray(query)) {
+                        var matches = [];
+                        for (var j = 0; j < query.length; j++) {
                             for (var i = 0; i < data.length; i++) {
-                                if ((angular.isNumber(query) && data[i].id == query) ||
-                                    (angular.isObject(query) && 'id' in query && data[i].id == query.id))
-                                    return data[i];
-
+                                if ((angular.isNumber(query[j]) && data[i].id == query[j]) ||
+                                    (angular.isObject(query[j]) && 'id' in query[j] && data[i].id == query[j].id))
+                                    matches.push(data[i]);
                             }
-                            return data;
                         }
+                        return matches;
+                    } else
+                    // 3º Busca por id o {id: ...}
+                    {
+                        for (var i = 0; i < data.length; i++) {
+                            if ((angular.isNumber(query) && data[i].id == query) ||
+                                (angular.isObject(query) && 'id' in query && data[i].id == query.id))
+                                return data[i];
+
+                        }
+                        return data;
+                    }
                 });
             }
 
             // Ordena item
-            return promise.then(function (data) {
+            return promise.then(function(data) {
                 if (orderBy)
                     data = $filter("orderBy")(data, orderBy);
                 return data;
             });
         },
-        // Devuelve el item indicado por Id
-        getById: function (array, id, showError) {
+
+        /**
+         *
+         * @ngdoc method
+         * @name Global#getById
+         * @param {Atring} array Array de objetos
+         * @param {String | Number} id Id del objeto a buscar
+         * @param {Boolean} throwException Indica si genera un excepción cuando el id no fue encontrado. *Por defecto: false*
+         * @description Devuelve el item indicado por id
+         *
+         * Ejemplo:
+         *
+         *              var colores = [{
+         *                         id: 1,
+         *                         nombre: "Rojo"
+         *                     }, {
+         *                         id: 2,
+         *                         nombre: "Verde"
+         *                     }];
+         *
+         *              Global.getById(colores, 2); // devuelve { id: 2, nombre: "Verde" }
+         *              Global.getById(colores, 3); // devuelve null
+         *              Global.getById(colores, 4, true); // tira una excepción
+         **/
+        getById: function(array, id, throwException) {
             if (array)
                 for (var i = 0; i < array.length; i++) {
                     if (array[i].id == id)
                         return array[i];
                 }
 
-            if (showError)
+            if (throwException)
                 throw "Id no encontrado"
             return null;
         },
-        // Devuelve el índica del item indicado por Id
-        indexById: function (array, id) {
+
+        /**
+         * @ngdoc method
+         * @name Global#indexById
+         * @param {Atring} array Array de objetos
+         * @param {String | Number} id Id del objeto a buscar
+         * @param {Boolean} throwException Indica si genera un excepción cuando el id no fue encontrado. *Por defecto: false*
+         * @description Devuelve el índice del objeto cuyo id sea el especificado
+         *
+         * Ejemplo:
+         *
+         *              var colores = [{
+         *                         id: 1,
+         *                         nombre: "Rojo"
+         *                     }, {
+         *                         id: 2,
+         *                         nombre: "Verde"
+         *                     }];
+         *
+         *              Global.indexById(colores, 2); // devuelve 1
+         *              Global.indexById(colores, 3); // devuelve -1
+         *              Global.indexById(colores, 4, true); // tira una excepción
+         **/
+        indexById: function(array, id, throwException) {
             if (array)
                 for (var i = 0; i < array.length; i++) {
                     if (array[i].id == id)
                         return i;
                 }
-            return -1;
+            if (throwException)
+                throw "Id no encontrado"
+            else
+                return -1;
         },
-        // Devuelve los días de diferencia entre las fechas
-        compareDate: function (date1, date2) {
+
+        /**
+         * @ngdoc method
+         * @name Global#compareDate
+         * @param {Date} date1 Primera fecha
+         * @param {Date} date2 Segunda fecha
+         * @description Compara dos fechas ignorando la hora. Devuelve:
+         *   - ```0``` si las fechas son iguales
+         *   - ```> 0``` si [Primera fecha] > [Segunda fecha]
+         *   - ```< 0``` si [Primera fecha] < [Segunda fecha]
+         **/
+        compareDate: function(date1, date2) {
             var d1 = new Date(date1);
             var d2 = new Date(date2);
             d1.setHours(0, 0, 0, 0);
             d2.setHours(0, 0, 0, 0);
             return (d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24);
         },
-        // Devuelve los milisegunds de diferencia entre las dos fechas
-        compareDateTime: function (date1, date2) {
+
+        /**
+         * @ngdoc method
+         * @name Global#compareDateTime
+         * @param {Date} date1 Primera fecha
+         * @param {Date} date2 Segunda fecha
+         * @description Compara dos fechas tomando en cuenta la hora. Devuelve:
+         *   - ```0``` si las fechas son iguales
+         *   - ```> 0``` si [Primera fecha] > [Segunda fecha]
+         *   - ```< 0``` si [Primera fecha] < [Segunda fecha]
+         **/
+        compareDateTime: function(date1, date2) {
             return date1.getTime() - date2.getTime();
         },
-        // Indica si la fecha es el día de hoy
-        isToday: function (date) {
+
+        /**
+         * @ngdoc method
+         * @name Global#isToday
+         * @param {Date} date Fecha para comparar
+         * @description Indica si la fecha coincide con el día actual
+         *
+         **/
+        isToday: function(date) {
             return this.compareDate(date, new Date()) == 0
+        },
+
+        /**
+         * @ngdoc method
+         * @name Global#isEmpty
+         * @param {Object} obj Objeto
+         * @description Indica si el objeto está vacío. En el caso de arrays, si el mismo no contiene ningún elemento
+         **/
+        isEmpty: function(obj) {
+            return (obj == null || obj == undefined || obj == "" || (angular.isArray(obj) && obj.length == 0) || angular.equals(obj, {}));
+        },
+
+        /**
+         * @ngdoc method
+         * @name Global#minify
+         * @param {Object} obj Objeto a minificar
+         * @description Minifica las propiedades de un objeto de acuerdo a las siguientes reglas:
+         *   - Ignora propidades ```null```, ```undefined``` o ```""```
+         *   - Ignora arrays sin elementos
+         *   - Si un objeto o subobjeto tiene una propiedad ```id``` sólo devuelve el valor de esa propiedad
+         **/
+        minify: function(obj) {
+            var val;
+            if (angular.isArray(obj)) {
+                val = [];
+                for (var i = 0; i < obj.length; i++) {
+                    var temp = this.minify(obj[i]);
+                    if (!this.isEmpty(temp))
+                        val.push(temp);
+                }
+            } else {
+                if (angular.isDate(obj)) {
+                    val = obj;
+                } else {
+                    if (angular.isObject(obj)) {
+                        // Si tiene una propiedad "id" devuelve sólo ese valor
+                        if (obj["id"]) {
+                            val = obj["id"];
+                        } else {
+                            // Si no, devuelve el objeto completo
+                            val = {};
+                            for (var p in obj) {
+                                var temp = this.minify(obj[p]);
+                                if (!this.isEmpty(temp))
+                                    val[p] = temp;
+                            }
+                        }
+                    } else {
+                        val = obj;
+                    }
+                }
+            }
+            return val;
         },
         cache: {
             data: {},
-            get: function (key, id, params) {
+            get: function(key, id, params) {
                 return this.data[key + '/' + id + '/' + JSON.stringify(params)];
             },
-            put: function (key, id, params, value) {
+            put: function(key, id, params, value) {
                 this.data[key + '/' + id + '/' + JSON.stringify(params)] = value;
             },
-            invalidate: function (key, id) {
+            invalidate: function(key, id) {
                 for (var k in this.data) {
-                    if (k.indexOf(key + '/' + id + '/') == 0)
-                    {
+                    if (k.indexOf(key + '/' + id + '/') == 0) {
                         console.log('cache - invalidate ' + k);
                         delete this.data[k];
                     }
@@ -52642,18 +52797,18 @@ angular.module('global').factory('Global', ['$q', function ($q) {
             }
         },
         // [DEBUG] Es una función sólo para debugging. Indica la cantidad de watches que hay en un momento dato. Es utilizada para analizar la performance.
-        watchCount: function () {
+        watchCount: function() {
             var root = $(document.getElementsByTagName('body'));
             var watchers = [];
 
-            var f = function (element) {
+            var f = function(element) {
                 if (element.data().hasOwnProperty('$scope')) {
-                    angular.forEach(element.data().$scope.$$watchers, function (watcher) {
+                    angular.forEach(element.data().$scope.$$watchers, function(watcher) {
                         watchers.push(watcher);
                     });
                 }
 
-                angular.forEach(element.children(), function (childElement) {
+                angular.forEach(element.children(), function(childElement) {
                     f($(childElement));
                 });
             };
@@ -52662,22 +52817,10 @@ angular.module('global').factory('Global', ['$q', function ($q) {
 
             console.log("Watch count: " + watchers.length);
             return watchers.length;
-        },
-        strings: {
-            capitalizeWords: function (string) {
-                return string.replace(/\w\S*/g, function (txt) { return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); });
-            },
-            format: function () {
-                var theString = arguments[0];
-                for (var i = 1; i < arguments.length; i++) {
-                    var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
-                    theString = theString.replace(regEx, arguments[i]);
-                }
-                return theString;
-            }
         }
     }
 }]);
+
 'use strict';
 
 /**
@@ -52878,25 +53021,26 @@ angular.module('global').factory('Session', ['$rootScope', '$http', '$timeout', 
     return self;
 }]);
 
+
 'use strict';
 
-angular.module('global').factory('Server', ["Plex", "$http", "$window", function (Plex, $http, $window) {
+angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global", function(Plex, $http, $window, Global) {
     return {
-        onThen: function (response) {
+        onThen: function(response) {
             // 18/11/2014 | jgabriel | Cuando no se devolvía datos (ej: status 204) no devolvía un objeto "response" y no es el comportamiento deseado
             //if (response && response.data)
             if (response && angular.isDefined(response.data))
                 return response.data;
             else return response;
         },
-        onSuccess: function (response, updateUI) {
+        onSuccess: function(response, updateUI) {
             if (updateUI) {
                 //Plex.clearAlerts();
                 Plex.loading.update(false, updateUI == "big");
             }
             return response;
         },
-        onError: function (response, updateUI) {
+        onError: function(response, updateUI) {
             if (updateUI) {
                 if (response && response.statusCode)
                     switch (response.statusCode) {
@@ -52904,21 +53048,23 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
                             if (response.error && response.error.errorCode) {
                                 var errorCode = Number(response.error.errorCode);
                                 switch (errorCode) {
-                                    case 7003: /* Not logged in */
+                                    case 7003:
+                                        /* Not logged in */
                                         $window.location = "/dotnet/SSO/Login.aspx?url=" + $window.encodeURIComponent($window.location);
                                         break;
-                                    case 7004:  /* Locked */
+                                    case 7004:
+                                        /* Locked */
                                         //Plex.showError("La sessión SSO está bloqueada");
                                         Plex.sessionLock(true);
                                         break;
-                                    case 7010: /* Security error */
+                                    case 7010:
+                                        /* Security error */
                                         Plex.showError("Utilizar HTTPS para conectarse a este sitio");
                                         break;
                                     default:
                                         Plex.showError();
                                 }
-                            }
-                            else
+                            } else
                                 Plex.showError();
                             break;
                         case 405:
@@ -52936,7 +53082,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             }
             return response;
         },
-        onValidation: function (response, updateUI) {
+        onValidation: function(response, updateUI) {
             if (updateUI) {
                 Plex.showWarning(response.response.data.responseStatus.message);
                 Plex.loading.update(false, updateUI == "big");
@@ -52944,7 +53090,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             return response;
         },
 
-        get: function (url, config) {
+        get: function(url, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
@@ -52957,15 +53103,25 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             // Envía el request
             var self = this;
             return $http.get(url, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        post: function (url, data, config) {
+        post: function(url, data, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
             }, config);
+
+            // Minify data
+            if (config.minify)
+                data = Global.minify(data);
 
             // Actualiza UI
             if (config.updateUI)
@@ -52974,31 +53130,51 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             // Envía el request
             var self = this;
             return $http.post(url, data, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        put: function (url, data, config) {
+        put: function(url, data, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
             }, config);
+
+            // Minify data
+            if (config.minify)
+                data = Global.minify(data);
 
             // Actualiza UI
             if (config.updateUI)
                 Plex.loading.update(true, config.updateUI == "big");
 
             var self = this;
-            return $http.post(url, data, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+            return $http.put(url, data, config)
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        patch: function (url, data, config) {
+        patch: function(url, data, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
             }, config);
+
+            // Minify data
+            if (config.minify)
+                data = Global.minify(data);
 
             // Actualiza UI
             if (config.updateUI)
@@ -53007,11 +53183,17 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             // Envía el request
             var self = this;
             return $http.patch(url, data, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        delete: function (url, config) {
+        delete: function(url, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
@@ -53023,9 +53205,15 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
 
             var self = this;
             return $http.delete(url, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         }
     }
 }]);
@@ -62625,6 +62813,15 @@ angular.module('plex', []);
 
 'use strict';
 
+/**
+ *
+ * @ngdoc service
+ * @module plex
+ * @name Plex
+ * @description
+ * Permite interactuar con la UI
+ *
+ **/
 angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "SSO", function ($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, SSO) {
     var self = {
         /*
@@ -62822,16 +63019,49 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             else
                 return true;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showError
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra un mensaje de error.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showError("El dato ingresado es incorrecto")
+         **/
         showError: function (message) {
             if (!message)
                 message = "No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...";
             self.error.title = message;
             self.error.show = true;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showWarning
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra una advertencia.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showWarning("El dato ingresado es incorrecto")
+         **/
         showWarning: function (message) {
             self.warning.title = message;
             self.warning.show = true;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showInfo
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra un mensaje de información.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showInfo("El dato ingresado es incorrecto")
+         **/
         showInfo: function (message) {
             self.info.title = message;
             self.info.show = true;
@@ -62863,6 +63093,18 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 return angular.isNumber(self.currentViewIndex) ? self.viewStack[self.currentViewIndex] : null;
             }
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#openView
+         * @param {String} path Ruta
+         * @return {Promise} promise Resuelve cuando se llama el método ```Plex.closeView()``` o el usuario hace click en el botón *atrás* del browser
+         * @description Permite cargar una vista y un controlador asociados.
+         *
+         * Ejemplo:
+         *
+         *      Plex.openView("/myRoute").then(function(returnValue) { ... })
+         **/
         openView: function (path) {
             console.log(path);
             var deferred = $q.defer();
@@ -62877,6 +63119,17 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             });
             return deferred.promise;
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#closeView
+         * @param {Object=} returnValue Objeto que se devuelve a openView
+         * @description Cierra la vista actual y resuelve la promise abierta en ```Plex.openView()```
+         *
+         * Ejemplo:
+         *
+         *      Plex.closeView(true);
+         **/
         closeView: function (returnValue) {
             //if (self.currentViewIndex > 0) {
             //    var view = self.currentView();
@@ -62910,6 +63163,32 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                     self.actions.push(a);
             });
         },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#initView
+         * @param {settings=} settings Objeto conteniendo uno o más parámetros para inicializar la vista
+         *   - **title**: Título
+         *   - **subtitle**: Subtítulo
+         *   - **actions**: Array de acciones con las siguientes opciones
+         *      - *title*: Título del ícono
+         *      - *icon*: Icono
+         *      - *handler*: Función a ejecutar cuando se hace clic en el ícono
+         * @description Inicializa la vista actual
+         *
+         * Ejemplo:
+         *
+         Plex.initView({
+                title: "Punto de inicio",
+                actions: [{
+                    title: "Camas",
+                    icon: "fa fa-bed",
+                    handler: function() {
+                        Plex.openView('mapa');
+                    }
+                }]
+            });
+         **/
         initView: function (settings) {
             // Esta función es llamada por el controlador para inicializar la vista
             var currentView = self.currentView();
@@ -63019,6 +63298,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
 
     return self;
 }]);
+
 (function () {
     'use strict';
 
@@ -63322,6 +63602,21 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
 }]);
 'use strict';
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-enter
+ * @description
+ * Ejecuta la función cuando se presiona la tecla ```Enter``` en el elemento
+ *
+ * @example
+    <example module="app" deps="" animate="false">
+    <file name="index.html">
+      <input type="text" label="Ingrese un nombre y presione enter" plex-enter="pressed = true" ng-model="nombre" plex />
+      <div class="alert alert-warning" ng-show="pressed">Enter presionado</div>
+      </file>
+    </example>
+**/
 angular.module('plex').directive('plexEnter', function () {
     return function (scope, element, attrs) {
         element.bind("keydown keypress", function (event) {
@@ -63335,10 +63630,22 @@ angular.module('plex').directive('plexEnter', function () {
     };
 });
 
-
-
 'use strict';
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-focus
+ * @description
+ * Activa el focus del elemento cuando cambia el valor de la propiedad asociada
+ * @example
+    <example module="app" deps="" animate="false">
+    <file name="index.html">
+      <a class="btn btn-default" ng-click="focused = focused + 1">Focus!</a><br><br>
+      <input type="text" plex-focus="focused" ng-model="nombre" plex />
+    </file>
+    </example>
+**/
 angular.module('plex').directive('plexFocus', function () {
     return {
         restrict: 'A',
@@ -63353,7 +63660,28 @@ angular.module('plex').directive('plexFocus', function () {
         }
     };
 });
-angular.module('plex').directive('plexInclude', function () {
+
+'use strict';
+
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-include
+ * @description
+ * Permite incluir vistas parciales al igual que ```ng-include``` pero permitiendo pasar parámetros.
+ * @param {string=} plex-include-miParametro Define la propiedad include.miParametro con el valor pasado en ```$scope```
+ *
+ * Por ejemplo
+ *
+ *     <div plex-include="'miArchivo.html'" plex-include-numero="5" plex-include-texto="miPropiedad"></div>
+ *
+ * permite al controlador referenciado en *miArchivo.html* acceder a
+ *
+ *     $scope.include.numero
+ *     $scope.include.texto
+ *
+**/
+﻿angular.module('plex').directive('plexInclude', function () {
     return {
         scope: true,
         template: '<div ng-include="plexInclude"></div>',
@@ -63384,6 +63712,7 @@ angular.module('plex').directive('plexInclude', function () {
         }
     };
 });
+
 'use strict'
 
 angular.module('plex').directive('plexSkin', ['Global', '$q', 'SSO', '$http', function (Global, $q, SSO, $http) {
@@ -63467,6 +63796,22 @@ angular.module('plex').directive("plexFilter", ["$filter", function ($filter) {
 }]);
 'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-max
+ * @description
+ * Agrega un validador de valor máximo. Requiere la directiva {@link module:plex.directive:plex}.
+ * @priority 599
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor mayor a 5 para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex="int" plex-max="5" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMax', function () {
     return {
         restrict: 'A',
@@ -63504,6 +63849,7 @@ angular.module('plex').directive('plexMax', function () {
         }
     };
 });
+
 'use strict'
 
 /**
@@ -63511,7 +63857,7 @@ angular.module('plex').directive('plexMax', function () {
  * @module plex
  * @name plex-min
  * @description
- * Agrega un validador de mínimo valor. Requiere la directiva {@link module:plex.directive:plex}.
+ * Agrega un validador de valor mínimo. Requiere la directiva {@link module:plex.directive:plex}.
  * @priority 599
  * @restrict A
  * @example
@@ -63575,6 +63921,7 @@ angular.module('plex').directive('plexMin', function () {
  * - **date**: Decora el campo con un selector de fecha. Actualmente funciona como adaptador de la directiva ```bs-datepicker``` (http://mgcrea.github.io/angular-strap/#/datepickers).
  * - **time**: Decora el campo con un selector de hora. Actualmente funciona como adaptador de la directiva ```bs-timepicker``` (http://mgcrea.github.io/angular-strap/#/timepickers).
  * - **bool**: Decora el campo con un slider booleano. **ATENCIÓN: ¡Actualmente no funciona con la última versión de Angular!
+ * - Si no es ninguno de los tipos de datos anteriores, asume que es un {@link module:plex.directive:plex-select}.
  *
  * @priority 598
  * @restrict EAC
@@ -63892,6 +64239,16 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
 
 'use strict';
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-form
+ * @description
+ * Muestra un botón de Guardar y otro de Cancelar asociados a dos funciones. El botón Guardar se habilita sólo cuando formulario es válido.
+ *
+ * Este directiva será reemplazada por {@link module:plex.directive:plex-submit}.
+ * @restrict A
+ **/
 angular.module('plex').directive("plexForm", ["Plex", function (Plex) {
     return {
         restrict: "A",
@@ -63916,8 +64273,18 @@ angular.module('plex').directive("plexForm", ["Plex", function (Plex) {
         }
     }
 }]);
+
 'use strict';
 
+
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-submit
+ * @description
+ * Emite un evento ```$plex-before-submit``` para indicar a la directiva {@link module:plex.directive:plex} que valide el modelo asociado.
+ * @restrict A
+ **/
 angular.module('plex').directive("plexSubmit", ["$parse", function ($parse) {
     return {
         restrict: "A",
@@ -63934,6 +64301,7 @@ angular.module('plex').directive("plexSubmit", ["$parse", function ($parse) {
         }
     }
 }]);
+
 'use strict';
 
 angular.module('plex').directive("plexCancel", ["$parse", function ($parse) {
@@ -64065,6 +64433,19 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
 }]);
 'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-working
+ * @description
+ * Cambia un ícono de Font-Awesome a un spinner (http://fortawesome.github.io/Font-Awesome/icon/spinner/) cuando el valor valida en ```true```.
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <a class="btn btn-default" ng-model="loading" ng-click="loading = !loading"><i class="fa fa-gear" plex-working="loading"></i><span>Configurar aplicación</span></a>
+      </file>
+    </example>
+ **/
 angular.module('plex').directive("plexWorking", function ($injector) {
     return function (scope, element, attrs) {
         if (element[0].className.indexOf('fa-')) {
@@ -64084,8 +64465,43 @@ angular.module('plex').directive("plexWorking", function ($injector) {
         }
     }
 });
+
 'use strict';
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-select
+ * @description
+ * Decora un input con una lista de selección. Requiere la directiva {@link module:plex.directive:plex}.
+ *
+ * Pueden utilizarse de dos maneras:
+ *   - &lt;input type="hidden" ```plex="item.nombre for item in opciones"``` &gt;
+ *   - &lt;input type="hidden" ```plex plex-select="item.nombre for item in opciones"``` &gt;
+ * @param {boolean=} multiple Permite seleccionar múltiples items. *Por defecto: false*
+ * @param {number=} timeout Indica el timeout para comenzar a buscar las opciones (muy útil cuando se utilizan promises). *Por defecto: 300*
+ * @param {boolean=} allowClear Indica el timeout para comenzar a buscar las opciones (muy útil cuando se utilizan promises). *Por defecto: 300*
+ * @param {min=} min Indica la cantidad mínima de caracteres para comenzar a buscar. *Por defecto: 0*
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <div ng-controller="ExampleController">
+            <label>Ingrese un valor texto de menos de tres caracteres para mostrar el error</label><br/>
+            <input type="text" ng-model="modelo" plex="item.nombre for item in opciones" />
+            <pre ng-show="modelo">{{modelo | json}}</pre>
+        </div>
+      </file>
+      <file name="main.js">
+        angular.module('app').controller('ExampleController', function($scope){
+            $scope.opciones = [
+                {id: 1, nombre: "Argentina"},
+                {id: 2, nombre: "Brasil"},
+                {id: 3, nombre: "Chile"},
+            ]
+        });
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Global', function ($timeout, $parse, $q, Global) {
     return {
         require: 'ngModel',
@@ -64126,12 +64542,12 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                             timer = $timeout(function () {
                                 var locals = { $value: query.term };
                                 $q.when(source(scope, locals)).then(function (matches) {
-                                    // Si "$value" no est� definido en inputExpression, asume que 'matches' equivale a todos los valores sin filtrar (i.e. filtro ac�)
+                                    // Si "$value" no está definido en inputExpression, asume que 'matches' equivale a todos los valores sin filtrar (i.e. filtramos acá)
                                     if (matches && query.term && inputExpression.indexOf("$value") < 0) {
                                         matches = matches.filter(function (i) {
                                             var locals = {};
                                             locals[itemName] = i;
-                                            return Global.matchText(query.term, viewMapper(scope, locals));
+                                            return Global.matchText(viewMapper(scope, locals), query.term);
                                         })
                                     }
                                     query.callback({ results: matches })
@@ -64214,7 +64630,21 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
 
 'use strict'
 
-// Permite utilizar la directive bs-Tooltip más fácilmente
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name title
+ * @description
+ * Mejora el tooltip del elemento. Actualmente funciona como adaptador de la directiva ```bs-tooltip``` (http://mgcrea.github.io/angular-strap/#/tooltips).
+ * @restrict A
+ * @param {string=} title-placement Ubicación del tooltipo. *Por defecto: top*
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <div class="alert alert-info" title="Este es un tooltip">Pasa por el mouse aquí arriba ...<div>
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('title', ['$tooltip', function ($tooltip) {
     return {
         restrict: 'A',
@@ -64236,11 +64666,38 @@ angular.module('plex').directive('title', ['$tooltip', function ($tooltip) {
         }
     };
 }]);
+
 'use strict'
 
+/**
+ * @ngdoc filter
+ * @module plex
+ * @name fromNow
+ * @description
+* Muestra el tiempo transcurrido desde la fecha indicada utilizando Moment.JS (http://momentjs.com/)
+ *
+ * @param {Date} date Fecha
+ * @param {bool} ignorePrefix Si es ```true``` indica que no debe agregar el prefijo "Hace..." (ej: Hace 20 días)
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <div ng-controller="ExampleController">
+          <h3>Utilizando el prefijo<h3>
+          <pre>{{fecha | fromNow}}</pre>
+          <h3>Sin prefijo<h3>
+          <pre>Tiempo transcurrido: {{fecha | fromNow:true}}</pre>
+        </div>
+      </file>
+      <file name="main.js">
+        angular.module('app').controller('ExampleController', function ($scope) {
+          $scope.fecha = new Date(2010, 1, 1);
+        });
+      </file>
+    </example>
+ **/
 angular.module('plex').filter('fromNow', function () {
     return function (date, ignorePrefix) {
-        /* 
+        /*
             Parámetros:
             - date: fecha a formatear
             - ignorePrefix: si es true, indica que no debe agregar el prefijo "Hace..." (ej: Hace 20 días)
@@ -64251,6 +64708,7 @@ angular.module('plex').filter('fromNow', function () {
             return "";
     }
 });
+
 'use strict';
 
 angular.module('plex').directive("plexMap", ["Plex", function (Plex) {
@@ -64301,135 +64759,295 @@ angular.module('plex').directive("plexMap", ["Plex", function (Plex) {
         }
     }
 }]);
+
+'use strict';
+// 
+// angular.module('plex').directive('plexChart', ['angularLoad', function (angularLoad) {
+//     return {
+//         restrict: 'EAC',
+//         replace: true,
+//         template: '<div></div>',
+//         scope: {
+//             config: '=',
+//             updateWhen: '='
+//         },
+//         link: function (scope, element, attrs) {
+//             angularLoad.loadScript('/lib/1.1/salud.plex/lib/highcharts/highcharts.js').then(function () {
+//                 var chart;
+//                 var seriesId = 0;
+//                 var ensureIds = function (series) {
+//                     series.forEach(function (s) {
+//                         if (!angular.isDefined(s.id)) {
+//                             s.id = "series-" + seriesId++;
+//                         }
+//                     });
+//                 };
+//
+//                 var updateZoom = function (axis, modelAxis) {
+//                     var extremes = axis.getExtremes();
+//                     if (modelAxis.currentMin !== extremes.dataMin || modelAxis.currentMax !== extremes.dataMax) {
+//                         axis.setExtremes(modelAxis.currentMin, modelAxis.currentMax, false);
+//                     }
+//                 };
+//
+//                 var processExtremes = function (chart, axis) {
+//                     if (axis.currentMin || axis.currentMax) {
+//                         chart.xAxis[0].setExtremes(axis.currentMin, axis.currentMax, true);
+//                     }
+//                 };
+//
+//                 var processSeries = function (chart, series) {
+//                     var ids = [];
+//                     if (series) {
+//                         ensureIds(series);
+//
+//                         //Find series to add or update
+//                         series.forEach(function (s) {
+//                             ids.push(s.id);
+//                             var chartSeries = chart.get(s.id);
+//                             if (chartSeries) {
+//                                 chartSeries.update(angular.copy(s), false);
+//                             } else {
+//                                 chart.addSeries(angular.copy(s), false);
+//                             }
+//                         });
+//                     }
+//
+//                     //Now remove any missing series
+//                     for (var i = chart.series.length - 1; i >= 0; i--) {
+//                         var s = chart.series[i];
+//                         if (ids.indexOf(s.options.id) < 0) {
+//                             s.remove(false);
+//                         }
+//                     };
+//
+//                 };
+//
+//                 // Init
+//                 Highcharts.setOptions({
+//                     global: {
+//                         useUTC: false
+//                     }
+//                 });
+//
+//                 var initialiseChart = function (scope, element, config) {
+//                     // 29/05/2015 | jgabriel | Angular 1.4 implementa deep extend con angular.merge()
+//                     var extendDeep = function extendDeep(dst) {
+//                         angular.forEach(arguments, function (obj) {
+//                             if (obj !== dst) {
+//                                 angular.forEach(obj, function (value, key) {
+//                                     if (dst[key] && dst[key].constructor && dst[key].constructor === Object) {
+//                                         extendDeep(dst[key], value);
+//                                     } else {
+//                                         dst[key] = value;
+//                                     }
+//                                 });
+//                             }
+//                         });
+//                         return dst;
+//                     };
+//
+//                     var config = extendDeep({
+//                         chart: {
+//                             events: {},
+//                             renderTo: element[0]
+//                         },
+//                         title: {
+//                             text: ''
+//                         },
+//                         subtitle: {},
+//                         series: [],
+//                         credits: {
+//                             enabled: false
+//                         },
+//                         plotOptions: {},
+//                         navigator: { enabled: false }
+//                     }, config);
+//
+//                     var chart = new Highcharts.Chart(config);
+//                     if (config.xAxis) {
+//                         processExtremes(chart, config.xAxis);
+//                     }
+//                     processSeries(chart, config.series);
+//                     chart.redraw();
+//                     return chart;
+//                 };
+//
+//                 // Watches
+//                 scope.$watch("updateWhen", function (current, old) {
+//                     if (current == old && chart)
+//                         return;
+//
+//                     if (chart)
+//                         chart.destroy();
+//                     chart = initialiseChart(scope, element, scope.config);
+//                 });
+//             });
+//         }
+//     };
+// }]);
+
 'use strict';
 
-angular.module('plex').directive('plexChart', ['angularLoad', function (angularLoad) {
+angular.module('plex').directive('plexCanvas', ['$q', 'angularLoad', function($q, angularLoad) {
     return {
-        restrict: 'EAC',
-        replace: true,
-        template: '<div></div>',
-        scope: {
-            config: '=',
-            updateWhen: '='
-        },
-        link: function (scope, element, attrs) {
-            angularLoad.loadScript('/lib/1.1/salud.plex/lib/highcharts/highcharts.js').then(function () {
-                var chart;
-                var seriesId = 0;
-                var ensureIds = function (series) {
-                    series.forEach(function (s) {
-                        if (!angular.isDefined(s.id)) {
-                            s.id = "series-" + seriesId++;
+        restrict: 'E',
+        templateUrl: '/lib/js/dist/plex-canvas/template.html',
+        link: function(scope, element, attrs) {
+            var config;
+            var backgroundImg = new Image();
+
+            function init() {
+                console.log("Canvas init inside");
+
+                // Preload background
+                if (config.background) {
+                    backgroundImg.src = config.background;
+                }
+
+                // Carga librerías
+                $q.all([
+                    angularLoad.loadCSS("/lib/js/dist/plex-canvas/svg-editor.css"),
+                    angularLoad.loadScript("/lib/js/dist/plex-canvas/svg-editor.min.js")
+                ]).then(function() {
+                    console.log("Canvas Loaded!");
+                    // Configura elementos
+                    angular.element('#workarea').css({
+                        width: Number(attrs.width),
+                        height: Number(attrs.height)
+                    });
+
+                    // Configura editor
+                    svgEditor.setConfig({
+                        lang: 'es',
+                        canvas_expansion: 1,
+                        dimensions: [Number(attrs.width), Number(attrs.height)],
+                        noDefaultExtensions: true,
+                        bkgd_url: config.background,
+                        imgPath: '/lib/js/dist/plex-canvas/images/',
+                        langPath: '/lib/js/dist/plex-canvas/locale/',
+                        extPath: '/lib/js/dist/plex-canvas/extensions/',
+                        extensions: [
+                            'ext-salud-dibujos.js',
+                            'ext-salud-defaults.js',
+                        ],
+                        initFill: {
+                            color: 'none',
+                            opacity: 1
+                        },
+                        initStroke: {
+                            width: 1,
+                            color: '000000',
+                            opacity: 1
+                        },
+                        noStorageOnLoad: true,
+                        showRulers: false,
+                        no_save_warning: true,
+                        show_outside_canvas: false,
+                        selectNew: false,
+                        allowedOrigins: [window.location.origin]
+                    });
+
+                    svgEditor.setCustomHandlers({
+                        //save: function (win, data) {
+                        //    modelController.$modelValue.svg = '<?xml version="1.0" encoding="UTF-8"?>\n' + data
+                        //},
+                        exportImage: function(win, data) {
+                            //debugger;
+                            if (svgEditor.canvas.undoMgr.getUndoStackSize() > 0) {
+                                config.svg = data.svg;
+                                var canvas = $('<canvas>', {
+                                    id: 'export_canvas'
+                                }).hide().appendTo('body');
+                                canvas[0].width = svgEditor.curConfig.dimensions[0];
+                                canvas[0].height = svgEditor.curConfig.dimensions[1];
+                                var context = canvas[0].getContext('2d');
+                                context.fillStyle = 'white';
+                                context.fillRect(0, 0, canvas[0].width, canvas[0].height);
+                                if (config.background)
+                                    context.drawImage(backgroundImg, 0, 0);
+                                //canvg(canvas[0], data.svg, {
+                                //    ignoreClear: true,
+                                //    ignoreDimensions: true,
+                                //    renderCallback: function () {
+                                //        var base64 = canvas[0].toDataURL(data.mimeType);
+                                //        prestacion.informe.png = base64;
+                                //        canvas.remove();
+                                //    }
+                                //});
+                            }
+                        }
+                    })
+
+                    // Init
+                    console.log("init canvas");
+                    svgEditor.init();
+                    if (config && config.svg) {
+                        svgEditor.loadFromString(config.svg);
+                        //svgEditor.canvas.undoMgr.resetUndoStack();
+                    }
+                });
+            }
+
+            // Eventos
+            scope.$watch(attrs.config, function(current, old) {
+                if (current && !config) {
+                    config = current;
+                    init();
+                }
+            });
+
+            scope.$on('$canvas-update-model', function() {
+                if (svgEditor.canvas.undoMgr.getUndoStackSize() > 0) {
+                    // SVG
+                    config.svg = svgCanvas.svgCanvasToString();
+                    // PNG
+                    var canvas = $('<canvas>', {
+                        id: 'export_canvas'
+                    }).hide().appendTo('body');
+                    canvas[0].width = svgEditor.curConfig.dimensions[0];
+                    canvas[0].height = svgEditor.curConfig.dimensions[1];
+                    var context = canvas[0].getContext('2d');
+                    context.fillStyle = 'white';
+                    context.fillRect(0, 0, canvas[0].width, canvas[0].height);
+                    if (config.background)
+                        context.drawImage(backgroundImg, 0, 0);
+                    canvg(canvas[0], config.svg, {
+                        ignoreClear: true,
+                        ignoreDimensions: true,
+                        renderCallback: function() {
+                            var base64 = canvas[0].toDataURL('image/png');
+                            config.png = base64;
+                            canvas.remove();
                         }
                     });
-                };
+                }
+            });
 
-                var updateZoom = function (axis, modelAxis) {
-                    var extremes = axis.getExtremes();
-                    if (modelAxis.currentMin !== extremes.dataMin || modelAxis.currentMax !== extremes.dataMax) {
-                        axis.setExtremes(modelAxis.currentMin, modelAxis.currentMax, false);
-                    }
-                };
-
-                var processExtremes = function (chart, axis) {
-                    if (axis.currentMin || axis.currentMax) {
-                        chart.xAxis[0].setExtremes(axis.currentMin, axis.currentMax, true);
-                    }
-                };
-
-                var processSeries = function (chart, series) {
-                    var ids = [];
-                    if (series) {
-                        ensureIds(series);
-
-                        //Find series to add or update
-                        series.forEach(function (s) {
-                            ids.push(s.id);
-                            var chartSeries = chart.get(s.id);
-                            if (chartSeries) {
-                                chartSeries.update(angular.copy(s), false);
-                            } else {
-                                chart.addSeries(angular.copy(s), false);
-                            }
-                        });
-                    }
-
-                    //Now remove any missing series
-                    for (var i = chart.series.length - 1; i >= 0; i--) {
-                        var s = chart.series[i];
-                        if (ids.indexOf(s.options.id) < 0) {
-                            s.remove(false);
-                        }
-                    };
-
-                };
-
-                // Init
-                Highcharts.setOptions({
-                    global: {
-                        useUTC: false
-                    }
-                });
-
-                var initialiseChart = function (scope, element, config) {
-                    // 29/05/2015 | jgabriel | Angular 1.4 implementa deep extend con angular.merge()
-                    var extendDeep = function extendDeep(dst) {
-                        angular.forEach(arguments, function (obj) {
-                            if (obj !== dst) {
-                                angular.forEach(obj, function (value, key) {
-                                    if (dst[key] && dst[key].constructor && dst[key].constructor === Object) {
-                                        extendDeep(dst[key], value);
-                                    } else {
-                                        dst[key] = value;
-                                    }
-                                });
-                            }
-                        });
-                        return dst;
-                    };
-
-                    var config = extendDeep({
-                        chart: {
-                            events: {},
-                            renderTo: element[0]
-                        },
-                        title: {
-                            text: ''
-                        },
-                        subtitle: {},
-                        series: [],
-                        credits: {
-                            enabled: false
-                        },
-                        plotOptions: {},
-                        navigator: { enabled: false }
-                    }, config);
-
-                    var chart = new Highcharts.Chart(config);
-                    if (config.xAxis) {
-                        processExtremes(chart, config.xAxis);
-                    }
-                    processSeries(chart, config.series);
-                    chart.redraw();
-                    return chart;
-                };
-
-                // Watches
-                scope.$watch("updateWhen", function (current, old) {
-                    if (current == old && chart)
-                        return;
-
-                    if (chart)
-                        chart.destroy();
-                    chart = initialiseChart(scope, element, scope.config);
-                });
-            });            
+            scope.$on('$destroy', function() {
+                angular.element('#svg_editor').remove();
+            });
         }
     };
-}]);
+}])
 
 'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-minlength
+ * @description
+ * Agrega un validador de largo mínimo de cadena de texto. Requiere la directiva {@link module:plex.directive:plex}.
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor texto de menos de tres caracteres para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex plex-minlength="3" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMinlength', function () {
     return {
         restrict: 'A',
@@ -64464,6 +65082,21 @@ angular.module('plex').directive('plexMinlength', function () {
 
 'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-maxlength
+ * @description
+ * Agrega un validador de largo máximo de cadena de texto. Requiere la directiva {@link module:plex.directive:plex}.
+ * @restrict A
+ * @example
+    <example module="app" deps="" animate="false">
+      <file name="index.html">
+        <label>Ingrese un valor texto de más de tres caracteres para mostrar el error</label><br/>
+        <input type="text" ng-model="modelo" plex plex-maxlength="3" />
+      </file>
+    </example>
+ **/
 angular.module('plex').directive('plexMaxlength', function () {
     return {
         restrict: 'A',
@@ -64495,6 +65128,7 @@ angular.module('plex').directive('plexMaxlength', function () {
         }
     };
 });
+
 'use strict';
 // Módulos para cargar
 var requiredModules = [

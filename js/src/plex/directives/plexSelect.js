@@ -79,7 +79,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                         matches = matches.filter(function (i) {
                                             var locals = {};
                                             locals[itemName] = i;
-                                            return Global.matchText(query.term, viewMapper(scope, locals));
+                                            return Global.matchText(viewMapper(scope, locals), query.term);
                                         })
                                     }
                                     query.callback({ results: matches })

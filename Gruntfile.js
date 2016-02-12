@@ -9,17 +9,18 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Orden de las tareas
-    grunt.registerTask('default', ['concat:js', 'less:global', 'less:fontawesome', 'less:cosmo', 'concat:cosmo', 'copy']);
+    grunt.registerTask('default', ['concat:js', 'less:global', 'less:fontawesome', 'less:cosmo', 'concat:cosmo', 'concat:svgEdit', 'copy']);
 
     grunt.initConfig({
         // Configuración de watch
         watch: {
-            scripts: {
-                files: ['**/*'],
-                tasks: ['default'],
-                options: {
-                    spawn: false,
-                },
+            js: {
+                files: ['js/src/**/*.*'],
+                tasks: ['default']
+            },
+            css: {
+                files: ['css/src/**/*.*'],
+                tasks: ['default']
             },
         },
         // Configuración de la tarea grunt-contrib-concat
@@ -106,14 +107,49 @@ module.exports = function(grunt) {
                     'js/src/plex/directives/plexWorking.js',
                     'js/src/plex/directives/plexSelect.js',
                     'js/src/plex/directives/title.js',
-                    'js/src/plex/filters/fromnow.js',
+                    'js/src/plex/filters/fromNow.js',
                     'js/src/plex/directives/plexMap.js',
                     'js/src/plex/directives/plexChart.js',
+                    'js/src/plex/directives/plexCanvas.js',
                     'js/src/plex/directives/plexMinLength.js',
                     'js/src/plex/directives/plexMaxLength.js',
 
                     // Config
                     'js/src/config.js'
+                ]
+            },
+            svgEdit: { // Archivos .js
+                dest: './js/dist/plex-canvas/svg-editor.min.js',
+                src: [
+                    'js/src/plex/lib/svg-edit/js-hotkeys/jquery.hotkeys.min.js',
+                    'js/src/plex/lib/svg-edit/jquerybbq/jquery.bbq.min.js',
+                    'js/src/plex/lib/svg-edit/svgicons/jquery.svgicons.js',
+                    'js/src/plex/lib/svg-edit/jgraduate/jquery.jgraduate.min.js',
+                    'js/src/plex/lib/svg-edit/spinbtn/JQuerySpinBtn.min.js',
+                    'js/src/plex/lib/svg-edit/jquery-ui/jquery-ui-1.8.17.custom.min.js',
+                    'js/src/plex/lib/svg-edit/jgraduate/jpicker.js',
+                    'js/src/plex/lib/svg-edit/locale/locale.js',
+                    'js/src/plex/lib/svg-edit/svgedit.compiled.js',
+                    // 'js/src/plex/lib/svg-edit/svgedit.js',
+                    // 'js/src/plex/lib/svg-edit/jquery-svg.js',
+                    // 'js/src/plex/lib/svg-edit/contextmenu/jquery.contextMenu.js',
+                    // 'js/src/plex/lib/svg-edit/browser.js',
+                    // 'js/src/plex/lib/svg-edit/svgtransformlist.js',
+                    // 'js/src/plex/lib/svg-edit/math.js',
+                    // 'js/src/plex/lib/svg-edit/units.js',
+                    // 'js/src/plex/lib/svg-edit/svgutils.js',
+                    // 'js/src/plex/lib/svg-edit/sanitize.js',
+                    // 'js/src/plex/lib/svg-edit/history.js',
+                    // 'js/src/plex/lib/svg-edit/coords.js',
+                    // 'js/src/plex/lib/svg-edit/recalculate.js',
+                    // 'js/src/plex/lib/svg-edit/select.js',
+                    // 'js/src/plex/lib/svg-edit/draw.js',
+                    // 'js/src/plex/lib/svg-edit/path.js',
+                    // 'js/src/plex/lib/svg-edit/svgcanvas.js',
+                    // 'js/src/plex/lib/svg-edit/svg-editor.js',
+                    // 'js/src/plex/lib/svg-edit/locale/locale.js',
+                    // 'js/src/plex/lib/svg-edit/canvg/rgbcolor.js',
+                    // 'js/src/plex/lib/svg-edit/canvg/canvg.js',
                 ]
             },
             cosmo: { // Archivos .css generados por la tarea 'less'
@@ -157,23 +193,29 @@ module.exports = function(grunt) {
         // Configuración de la tarea copy
         copy: {
             medical: {
-                cwd: 'css/src/webfont-medical-icons/fonts', // set working folder / root to copy
-                src: '**/*', // copy all files and subfolders
-                dest: 'css/dist/fonts', // destination folder
-                expand: true // required when using cwd
+                cwd: 'css/src/webfont-medical-icons/fonts',
+                src: '**/*',
+                dest: 'css/dist/fonts',
+                expand: true
             },
             fontawesome: {
-                cwd: 'bower_components/font-awesome/fonts', // set working folder / root to copy
-                src: '**/*', // copy all files and subfolders
-                dest: 'css/dist/fonts', // destination folder
-                expand: true // required when using cwd
+                cwd: 'bower_components/font-awesome/fonts',
+                src: '**/*',
+                dest: 'css/dist/fonts',
+                expand: true
             },
             cosmo: {
-                cwd: 'css/src/bootswatch/cosmo/fonts', // set working folder / root to copy
-                src: '**/*', // copy all files and subfolders
-                dest: 'css/dist/fonts', // destination folder
-                expand: true // required when using cwd
-            }
+                cwd: 'css/src/bootswatch/cosmo/fonts',
+                src: '**/*',
+                dest: 'css/dist/fonts',
+                expand: true
+            },
+            // svgEdit: {
+            //     cwd: 'js/src/plex/lib/svg-edit',
+            //     src: '**/*',
+            //     dest: 'js/dist/plex-canvas',
+            //     expand: true
+            // }
         }
     });
 };

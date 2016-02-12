@@ -1,22 +1,23 @@
-﻿'use strict';
+﻿
+'use strict';
 
-angular.module('global').factory('Server', ["Plex", "$http", "$window", function (Plex, $http, $window) {
+angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global", function(Plex, $http, $window, Global) {
     return {
-        onThen: function (response) {
+        onThen: function(response) {
             // 18/11/2014 | jgabriel | Cuando no se devolvía datos (ej: status 204) no devolvía un objeto "response" y no es el comportamiento deseado
             //if (response && response.data)
             if (response && angular.isDefined(response.data))
                 return response.data;
             else return response;
         },
-        onSuccess: function (response, updateUI) {
+        onSuccess: function(response, updateUI) {
             if (updateUI) {
                 //Plex.clearAlerts();
                 Plex.loading.update(false, updateUI == "big");
             }
             return response;
         },
-        onError: function (response, updateUI) {
+        onError: function(response, updateUI) {
             if (updateUI) {
                 if (response && response.statusCode)
                     switch (response.statusCode) {
@@ -24,21 +25,23 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
                             if (response.error && response.error.errorCode) {
                                 var errorCode = Number(response.error.errorCode);
                                 switch (errorCode) {
-                                    case 7003: /* Not logged in */
+                                    case 7003:
+                                        /* Not logged in */
                                         $window.location = "/dotnet/SSO/Login.aspx?url=" + $window.encodeURIComponent($window.location);
                                         break;
-                                    case 7004:  /* Locked */
+                                    case 7004:
+                                        /* Locked */
                                         //Plex.showError("La sessión SSO está bloqueada");
                                         Plex.sessionLock(true);
                                         break;
-                                    case 7010: /* Security error */
+                                    case 7010:
+                                        /* Security error */
                                         Plex.showError("Utilizar HTTPS para conectarse a este sitio");
                                         break;
                                     default:
                                         Plex.showError();
                                 }
-                            }
-                            else
+                            } else
                                 Plex.showError();
                             break;
                         case 405:
@@ -56,7 +59,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             }
             return response;
         },
-        onValidation: function (response, updateUI) {
+        onValidation: function(response, updateUI) {
             if (updateUI) {
                 Plex.showWarning(response.response.data.responseStatus.message);
                 Plex.loading.update(false, updateUI == "big");
@@ -64,7 +67,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             return response;
         },
 
-        get: function (url, config) {
+        get: function(url, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
@@ -77,15 +80,25 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             // Envía el request
             var self = this;
             return $http.get(url, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        post: function (url, data, config) {
+        post: function(url, data, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
             }, config);
+
+            // Minify data
+            if (config.minify)
+                data = Global.minify(data);
 
             // Actualiza UI
             if (config.updateUI)
@@ -94,31 +107,51 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             // Envía el request
             var self = this;
             return $http.post(url, data, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        put: function (url, data, config) {
+        put: function(url, data, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
             }, config);
+
+            // Minify data
+            if (config.minify)
+                data = Global.minify(data);
 
             // Actualiza UI
             if (config.updateUI)
                 Plex.loading.update(true, config.updateUI == "big");
 
             var self = this;
-            return $http.post(url, data, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+            return $http.put(url, data, config)
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        patch: function (url, data, config) {
+        patch: function(url, data, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
             }, config);
+
+            // Minify data
+            if (config.minify)
+                data = Global.minify(data);
 
             // Actualiza UI
             if (config.updateUI)
@@ -127,11 +160,17 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
             // Envía el request
             var self = this;
             return $http.patch(url, data, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         },
-        delete: function (url, config) {
+        delete: function(url, config) {
             // Prepara configuración
             config = angular.extend({
                 updateUI: "small"
@@ -143,9 +182,15 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", function
 
             var self = this;
             return $http.delete(url, config)
-                .success(function (response) { return self.onSuccess(response, config.updateUI) })
-                .error(function (response) { return self.onError(response, config.updateUI) })
-                .then(function (response) { return self.onThen(response) })
+                .success(function(response) {
+                    return self.onSuccess(response, config.updateUI)
+                })
+                .error(function(response) {
+                    return self.onError(response, config.updateUI)
+                })
+                .then(function(response) {
+                    return self.onThen(response)
+                })
         }
     }
 }]);
