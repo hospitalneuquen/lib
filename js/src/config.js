@@ -24,6 +24,7 @@ var requiredModules = [
     'pasvaz.bindonce',
     'ngFileUpload',
     'textAngular',
+    'angular-jwt',
     // Salud
     'global',
     'plex'
@@ -85,7 +86,7 @@ angular
             else {
                 return data;
             }
-        })        
+        })
     }])
     .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {

@@ -26,6 +26,7 @@
     "oclazyload": "ocLazyLoad#~1.0.9",
     "angular-bindonce": "~0.3.3",
     "ng-file-upload": "~11.2.0",
-    "angular-motion": "~0.4.3"
+    "angular-motion": "~0.4.3",
+    "angular-jwt": "~0.0.9"
   }
 }

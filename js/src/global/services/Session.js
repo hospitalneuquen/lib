@@ -5,106 +5,135 @@
  * @module global
  * @name Session
  * @description
- * Servicio de gestión de sesión de usuario. Soporta diferentes tipos de autenticación
+ * Servicio de gestión de sesión de usuario.
+ *
+ * Notas: actualmente sólo soporta autenticación con SSO, pero podrían implementarse otros métodos a través un mecanismo de herencia. (Ver http://blog.mgechev.com/2013/12/18/inheritance-services-controllers-in-angularjs/ )
  **/
-angular.module('global').factory('Session', ['$rootScope', '$http', '$timeout', function($rootScope, $http, $timeout) {
+angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$window', 'jwtHelper', function($rootScope, $q, $http, $window, jwtHelper) {
     var self = {
-        // Datos básicos de la sesión
-        id: 'ABCDEFGHI', // Identificador de la sesión
-        state: 0, // 0 = Inactiva, 1 = Activa, 2 = Bloqueada
-        user: {
-            id: 12345, // Identificador del usuario
-            firstName: 'María Eugenia', // Nombre del usuario
-            lastName: 'García', // Apellido del usuario
-            username: 'mgarcia', // Nombre de usuario
-        },
+        state: 'inactive', // Estado de la sesión: inactive, active, locked. Se inicializa en init().
+        id: null, // Identificador de la sesión. Se inicializa en init().
+        user: null, // Datos del usuario. Se inicializa en init().
+        permissions: null, // Permisos del usuario. Se inicializa en init().
+        variables: null, // Variables asociadas al usuario. Se inicializa en init().
         settings: {
-            plexSkin: 'cosmo'
+            //plexSkin: 'cosmo',
+
+            /**
+             *
+             * @ngdoc method
+             * @name Session#settings.load
+             * @param {String} name Nombre del setting
+             * @description Carga un setting de usuario desde el backend. Una vez finalizado actualiza la entrada ```Session.settings[{name}]``` con el valor.
+             * @returns {Promise} Promise
+             **/
+            load: function(name) {
+                self.api.getSetting(name).then(function(value) {
+                    self.settings[name] = value;
+                    return value;
+                })
+            },
+
+            /**
+             *
+             * @ngdoc method
+             * @name Session#settings.set
+             * @param {String} name Nombre del setting
+             * @description Guarda un setting de usuario en el backend. Una vez finalizado actualiza la entrada ```Session.settings[{name}]``` con el nuevo valor.
+             * @returns {Promise} Promise
+             **/
+            set: function(setting, value) {
+                self.api.setSetting(setting, value).then(function(value) {
+                    self.settings[setting] = value;
+                    return value;
+                })
+            }
         },
-        profile: { // Datos de perfil del usuario. Este objeto es utilizado por otros servicios y controladores para establecer datos comunes para las aplicaciones
-            perfil: 'medico',
-            ubicaciones: [{
-                id: 'CM',
-                nombre: 'Clínica Médica',
-            }, {
-                id: 'CQ',
-                nombre: 'Clínica Quirúrgica'
-            }],
-            idProfesional: 12345,
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#isActive
+         * @description Devuelve ```true``` si el usuario inició sesión y no está bloqueada
+         **/
+        isActive: function() {
+            if (self.state == 'inactive') {
+                // Inicia la sesión desde un token almacenado (si existe)
+                self.init($window.sessionStorage.jwt);
+            }
+            return self.state == 'active';
         },
-        // _initCache: null,
-        // init: function() {
-        //     if (!self._initCache)
-        //         self._initCache = $http.get('/api/sso/sessions/current').then(function(response) {
-        //             self.session = response.data;
-        //         })
-        //     return self._initCache;
-        // },
-        // menu: function(applicationId) {
-        //     return $http.get('/api/sso/users/current/menu/' + applicationId).then(function(response) {
-        //         return (response && response.data) || response;
-        //     });
-        // },
-        // settings: {
-        //     get: function(setting) {
-        //         return $http.get('/api/sso/users/current/settings/' + setting).then(function(response) {
-        //             return (response && response.data) || response;
-        //         });
-        //     },
-        //     post: function(setting, value) {
-        //         return $http.post('/api/sso/users/current/settings/' + setting, {
-        //             value: value
-        //         }).then(function(response) {
-        //             return (response && response.data) || response;
-        //         });
-        //     }
-        // },
-        // lock: function() {
-        //     self.waitForUnlock();
-        //     return $http.post('/api/sso/sessions/current/lock').then(function(response) {
-        //         angular.extend(self.session, response.data);
-        //         $rootScope.$broadcast('sso-lock');
-        //         return response.data;
-        //     });
-        // },
-        // unlock: function(password) {
-        //     self.waitForUnlock(true);
-        //     return $http.post('/api/sso/sessions/current/unlock', {
-        //         password: password
-        //     }).then(function(response) {
-        //         angular.extend(self.session, response.data);
-        //         $rootScope.$broadcast('sso-unlock');
-        //         return response.data;
-        //     }).catch(function(e) {
-        //         // Falló el unlock, por lo que seguimos esperando
-        //         self.waitForUnlock();
-        //         throw e;
-        //     });
-        // },
-        // _waitForUnlockTimer: null,
-        // waitForUnlock: function(cancel) {
-        //     // Observa si la sesión se desbloqueó (por ejemplo, desde otro tab en el browser)
-        //     if (!cancel) {
-        //         self._waitForUnlockTimer = $timeout(function() {
-        //             $http.get('/api/sso/sessions/current/state').then(function(response) {
-        //                 if (response && response.data == 0) {
-        //                     // Si todavía no fue cancelada ...
-        //                     if (self._waitForUnlockTimer) {
-        //                         self.waitForUnlock(true);
-        //                         $rootScope.$broadcast('sso-unlock');
-        //                     }
-        //                 } else {
-        //                     self.waitForUnlock();
-        //                 }
-        //             })
-        //         }, 1000);
-        //     } else {
-        //         if (self._waitForUnlockTimer) {
-        //             $timeout.cancel(self._waitForUnlockTimer);
-        //             self._waitForUnlockTimer = null;
-        //         }
-        //     }
-        // },
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#reset
+         * @description Cierra la sesión actual
+         **/
+        logout: function() {
+            self.state = 'inactive';
+            self.id = null;
+            self.user = null;
+            self.permissions = null;
+            self.variables = null;
+            delete $window.sessionStorage.jwt;
+        },
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#init
+         * @param {Object} data Datos de la sesión
+         * @description Inicializa la sesión con los datos suministrados
+         **/
+        init: function(token) {
+            self.logout();
+
+            // Json Web Token (JWT)
+            if (token) {
+                try {
+                    if (!jwtHelper.isTokenExpired(token)) {
+                        var payload = jwtHelper.decodeToken(token);
+
+                        self.user = {
+                            name: payload.name,
+                            givenName: payload.given_name,
+                            familyNane: payload.family_name,
+                            picture: payload.picture,
+                            username: payload.username,
+                        };
+                        self.variables = payload.scope.variables;
+                        self.permissions = payload.scope.permissions;
+
+                        // Login OK
+                        $window.sessionStorage.jwt = token;
+                        self.state = 'active';
+                    }
+                } catch (e) {
+                    // El token no es válido
+                }
+            }
+        },
+        api: { // Encapsula llamadas a la API
+            login: function(data) {
+                return $http.post('/auth/login', data).then(function(response) {
+                    return response && response.data;
+                });
+            },
+            getSetting: function(setting) {
+                return $http.get('/auth/settings/' + setting).then(function(response) {
+                    return (response && response.data) || response;
+                });
+            },
+            setSetting: function(setting, value) {
+                return $http.post('/auth/settings/' + setting, {
+                    value: value
+                }).then(function(response) {
+                    return response && response.data;
+                });
+            }
+        }
     };
+
     return self;
 }]);

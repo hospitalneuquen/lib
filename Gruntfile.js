@@ -69,6 +69,7 @@ module.exports = function(grunt) {
                     'bower_components/ocLazyLoad/dist/ocLazyLoad.min.js',
                     'bower_components/angular-bindonce/bindonce.js',
                     'bower_components/ng-file-upload/ng-file-upload.js',
+                    'bower_components/angular-jwt/dist/angular-jwt.js',
                     'js/src/patches/angular-load.js',
 
                     // Global
@@ -77,6 +78,7 @@ module.exports = function(grunt) {
                     'js/src/global/services/Session.js',
                     'js/src/global/services/SSO.js',
                     'js/src/global/services/Server.js',
+                    'js/src/global/controllers/session.js',
 
                     // Plex
                     'js/src/plex/lib/moment/moment.js',

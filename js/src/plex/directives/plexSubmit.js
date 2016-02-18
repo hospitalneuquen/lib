@@ -13,6 +13,7 @@ angular.module('plex').directive("plexSubmit", ["$parse", function ($parse) {
     return {
         restrict: "A",
         require: '^form',
+        scope: false,
         link: function (scope, element, attrs, formController) {
             var fn = $parse(attrs.plexSubmit);
             element.on('click', function (event) {

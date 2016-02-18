@@ -52388,6 +52388,138 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
 }]);
 
 
+(function() {
+
+
+// Create all modules and define dependencies to make sure they exist
+// and are loaded in the correct order to satisfy dependency injection
+// before all nested files are concatenated by Grunt
+
+// Modules
+angular.module('angular-jwt',
+    [
+        'angular-jwt.interceptor',
+        'angular-jwt.jwt'
+    ]);
+
+ angular.module('angular-jwt.interceptor', [])
+  .provider('jwtInterceptor', function() {
+
+    this.urlParam = null;
+    this.authHeader = 'Authorization';
+    this.authPrefix = 'Bearer ';
+    this.tokenGetter = function() {
+      return null;
+    }
+
+    var config = this;
+
+    this.$get = ["$q", "$injector", "$rootScope", function ($q, $injector, $rootScope) {
+      return {
+        request: function (request) {
+          if (request.skipAuthorization) {
+            return request;
+          }
+
+          if (config.urlParam) {
+            request.params = request.params || {};
+            // Already has the token in the url itself
+            if (request.params[config.urlParam]) {
+              return request;
+            }
+          } else {
+            request.headers = request.headers || {};
+            // Already has an Authorization header
+            if (request.headers[config.authHeader]) {
+              return request;
+            }
+          }
+
+          var tokenPromise = $q.when($injector.invoke(config.tokenGetter, this, {
+            config: request
+          }));
+
+          return tokenPromise.then(function(token) {
+            if (token) {
+              if (config.urlParam) {
+                request.params[config.urlParam] = token;
+              } else {
+                request.headers[config.authHeader] = config.authPrefix + token;
+              }
+            }
+            return request;
+          });
+        },
+        responseError: function (response) {
+          // handle the case where the user is not authenticated
+          if (response.status === 401) {
+            $rootScope.$broadcast('unauthenticated', response);
+          }
+          return $q.reject(response);
+        }
+      };
+    }];
+  });
+
+ angular.module('angular-jwt.jwt', [])
+  .service('jwtHelper', function() {
+
+    this.urlBase64Decode = function(str) {
+      var output = str.replace(/-/g, '+').replace(/_/g, '/');
+      switch (output.length % 4) {
+        case 0: { break; }
+        case 2: { output += '=='; break; }
+        case 3: { output += '='; break; }
+        default: {
+          throw 'Illegal base64url string!';
+        }
+      }
+      return decodeURIComponent(escape(window.atob(output))); //polifyll https://github.com/davidchambers/Base64.js
+    }
+
+
+    this.decodeToken = function(token) {
+      var parts = token.split('.');
+
+      if (parts.length !== 3) {
+        throw new Error('JWT must have 3 parts');
+      }
+
+      var decoded = this.urlBase64Decode(parts[1]);
+      if (!decoded) {
+        throw new Error('Cannot decode the token');
+      }
+
+      return JSON.parse(decoded);
+    }
+
+    this.getTokenExpirationDate = function(token) {
+      var decoded;
+      decoded = this.decodeToken(token);
+
+      if(typeof decoded.exp === "undefined") {
+        return null;
+      }
+
+      var d = new Date(0); // The 0 here is the key, which sets the date to the epoch
+      d.setUTCSeconds(decoded.exp);
+
+      return d;
+    };
+
+    this.isTokenExpired = function(token, offsetSeconds) {
+      var d = this.getTokenExpirationDate(token);
+      offsetSeconds = offsetSeconds || 0;
+      if (d === null) {
+        return false;
+      }
+
+      // Token expired?
+      return !(d.valueOf() > (new Date().valueOf() + (offsetSeconds * 1000)));
+    };
+  });
+
+}());
 /* 07/10/2015 | jgabriel | Basado en angular-load.js / v0.3.0 / (c) 2014, 2015 Uri Shaked / MIT Licence 
  * Incopora el loading de m�ltiples archivos en forma sincr�nica
  */
@@ -52828,196 +52960,136 @@ angular.module('global').factory('Global', ['$q', function($q) {
  * @module global
  * @name Session
  * @description
- * Servicio de gestión de sesión de usuario. Soporta diferentes tipos de autenticación
+ * Servicio de gestión de sesión de usuario.
+ *
+ * Notas: actualmente sólo soporta autenticación con SSO, pero podrían implementarse otros métodos a través un mecanismo de herencia. (Ver http://blog.mgechev.com/2013/12/18/inheritance-services-controllers-in-angularjs/ )
  **/
-angular.module('global').factory('Session', ['$rootScope', '$http', '$timeout', function($rootScope, $http, $timeout) {
+angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$window', 'jwtHelper', function($rootScope, $q, $http, $window, jwtHelper) {
     var self = {
-        // Datos básicos de la sesión
-        id: 'ABCDEFGHI', // Identificador de la sesión
-        state: 0, // 0 = Inactiva, 1 = Activa, 2 = Bloqueada
-        user: {
-            id: 12345, // Identificador del usuario
-            firstName: 'María Eugenia', // Nombre del usuario
-            lastName: 'García', // Apellido del usuario
-            username: 'mgarcia', // Nombre de usuario
-        },
+        state: 'inactive', // Estado de la sesión: inactive, active, locked. Se inicializa en init().
+        id: null, // Identificador de la sesión. Se inicializa en init().
+        user: null, // Datos del usuario. Se inicializa en init().
+        permissions: null, // Permisos del usuario. Se inicializa en init().
+        variables: null, // Variables asociadas al usuario. Se inicializa en init().
         settings: {
-            plexSkin: 'cosmo'
-        },
-        profile: { // Datos de perfil del usuario. Este objeto es utilizado por otros servicios y controladores para establecer datos comunes para las aplicaciones
-            perfil: 'medico',
-            ubicaciones: [{
-                id: 'CM',
-                nombre: 'Clínica Médica',
-            }, {
-                id: 'CQ',
-                nombre: 'Clínica Quirúrgica'
-            }],
-            idProfesional: 12345,
-        },
-        // _initCache: null,
-        // init: function() {
-        //     if (!self._initCache)
-        //         self._initCache = $http.get('/api/sso/sessions/current').then(function(response) {
-        //             self.session = response.data;
-        //         })
-        //     return self._initCache;
-        // },
-        // menu: function(applicationId) {
-        //     return $http.get('/api/sso/users/current/menu/' + applicationId).then(function(response) {
-        //         return (response && response.data) || response;
-        //     });
-        // },
-        // settings: {
-        //     get: function(setting) {
-        //         return $http.get('/api/sso/users/current/settings/' + setting).then(function(response) {
-        //             return (response && response.data) || response;
-        //         });
-        //     },
-        //     post: function(setting, value) {
-        //         return $http.post('/api/sso/users/current/settings/' + setting, {
-        //             value: value
-        //         }).then(function(response) {
-        //             return (response && response.data) || response;
-        //         });
-        //     }
-        // },
-        // lock: function() {
-        //     self.waitForUnlock();
-        //     return $http.post('/api/sso/sessions/current/lock').then(function(response) {
-        //         angular.extend(self.session, response.data);
-        //         $rootScope.$broadcast('sso-lock');
-        //         return response.data;
-        //     });
-        // },
-        // unlock: function(password) {
-        //     self.waitForUnlock(true);
-        //     return $http.post('/api/sso/sessions/current/unlock', {
-        //         password: password
-        //     }).then(function(response) {
-        //         angular.extend(self.session, response.data);
-        //         $rootScope.$broadcast('sso-unlock');
-        //         return response.data;
-        //     }).catch(function(e) {
-        //         // Falló el unlock, por lo que seguimos esperando
-        //         self.waitForUnlock();
-        //         throw e;
-        //     });
-        // },
-        // _waitForUnlockTimer: null,
-        // waitForUnlock: function(cancel) {
-        //     // Observa si la sesión se desbloqueó (por ejemplo, desde otro tab en el browser)
-        //     if (!cancel) {
-        //         self._waitForUnlockTimer = $timeout(function() {
-        //             $http.get('/api/sso/sessions/current/state').then(function(response) {
-        //                 if (response && response.data == 0) {
-        //                     // Si todavía no fue cancelada ...
-        //                     if (self._waitForUnlockTimer) {
-        //                         self.waitForUnlock(true);
-        //                         $rootScope.$broadcast('sso-unlock');
-        //                     }
-        //                 } else {
-        //                     self.waitForUnlock();
-        //                 }
-        //             })
-        //         }, 1000);
-        //     } else {
-        //         if (self._waitForUnlockTimer) {
-        //             $timeout.cancel(self._waitForUnlockTimer);
-        //             self._waitForUnlockTimer = null;
-        //         }
-        //     }
-        // },
-    };
-    return self;
-}]);
+            //plexSkin: 'cosmo',
 
-'use strict';
-
-/**
- * @ngdoc service
- * @module global
- * @name SSO
- * @description
- * Servicio de autenticación y manejo de la sesión con SSO
- **/
- angular.module('global').factory('SSO', ['$rootScope', '$http', '$timeout', function($rootScope, $http, $timeout) {
-    var self = {
-        _initCache: null,
-        session: null,
-        init: function() {
-            if (!self._initCache)
-                self._initCache = $http.get('/api/sso/sessions/current').then(function(response) {
-                    self.session = response.data;
+            /**
+             *
+             * @ngdoc method
+             * @name Session#settings.load
+             * @param {String} name Nombre del setting
+             * @description Carga un setting de usuario desde el backend. Una vez finalizado actualiza la entrada ```Session.settings[{name}]``` con el valor.
+             * @returns {Promise} Promise
+             **/
+            load: function(name) {
+                self.api.getSetting(name).then(function(value) {
+                    self.settings[name] = value;
+                    return value;
                 })
-            return self._initCache;
-        },
-        menu: function(applicationId) {
-            return $http.get('/api/sso/users/current/menu/' + applicationId).then(function(response) {
-                return (response && response.data) || response;
-            });
-        },
-        settings: {
-            get: function(setting) {
-                return $http.get('/api/sso/users/current/settings/' + setting).then(function(response) {
-                    return (response && response.data) || response;
-                });
             },
-            post: function(setting, value) {
-                return $http.post('/api/sso/users/current/settings/' + setting, {
-                    value: value
-                }).then(function(response) {
-                    return (response && response.data) || response;
-                });
+
+            /**
+             *
+             * @ngdoc method
+             * @name Session#settings.set
+             * @param {String} name Nombre del setting
+             * @description Guarda un setting de usuario en el backend. Una vez finalizado actualiza la entrada ```Session.settings[{name}]``` con el nuevo valor.
+             * @returns {Promise} Promise
+             **/
+            set: function(setting, value) {
+                self.api.setSetting(setting, value).then(function(value) {
+                    self.settings[setting] = value;
+                    return value;
+                })
             }
         },
-        lock: function() {
-            self.waitForUnlock();
-            return $http.post('/api/sso/sessions/current/lock').then(function(response) {
-                angular.extend(self.session, response.data);
-                $rootScope.$broadcast('sso-lock');
-                return response.data;
-            });
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#isActive
+         * @description Devuelve ```true``` si el usuario inició sesión y no está bloqueada
+         **/
+        isActive: function() {
+            if (self.state == 'inactive') {
+                // Inicia la sesión desde un token almacenado (si existe)
+                self.init($window.sessionStorage.jwt);
+            }
+            return self.state == 'active';
         },
-        unlock: function(password) {
-            self.waitForUnlock(true);
-            return $http.post('/api/sso/sessions/current/unlock', {
-                password: password
-            }).then(function(response) {
-                angular.extend(self.session, response.data);
-                $rootScope.$broadcast('sso-unlock');
-                return response.data;
-            }).catch(function(e) {
-                // Falló el unlock, por lo que seguimos esperando
-                self.waitForUnlock();
-                throw e;
-            });
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#reset
+         * @description Cierra la sesión actual
+         **/
+        logout: function() {
+            self.state = 'inactive';
+            self.id = null;
+            self.user = null;
+            self.permissions = null;
+            self.variables = null;
+            delete $window.sessionStorage.jwt;
         },
-        _waitForUnlockTimer: null,
-        waitForUnlock: function(cancel) {
-            // Observa si la sesión se desbloqueó (por ejemplo, desde otro tab en el browser)
-            if (!cancel) {
-                self._waitForUnlockTimer = $timeout(function() {
-                    $http.get('/api/sso/sessions/current/state').then(function(response) {
-                        if (response && response.data == 0) {
-                            // Si todavía no fue cancelada ...
-                            if (self._waitForUnlockTimer) {
-                                self.waitForUnlock(true);
-                                $rootScope.$broadcast('sso-unlock');
-                            }
-                        } else {
-                            self.waitForUnlock();
-                        }
-                    })
-                }, 1000);
-            } else {
-                if (self._waitForUnlockTimer) {
-                    $timeout.cancel(self._waitForUnlockTimer);
-                    self._waitForUnlockTimer = null;
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#init
+         * @param {Object} data Datos de la sesión
+         * @description Inicializa la sesión con los datos suministrados
+         **/
+        init: function(token) {
+            self.logout();
+
+            // Json Web Token (JWT)
+            if (token) {
+                try {
+                    if (!jwtHelper.isTokenExpired(token)) {
+                        var payload = jwtHelper.decodeToken(token);
+
+                        self.user = {
+                            name: payload.name,
+                            givenName: payload.given_name,
+                            familyNane: payload.family_name,
+                            picture: payload.picture,
+                            username: payload.username,
+                        };
+                        self.variables = payload.scope.variables;
+                        self.permissions = payload.scope.permissions;
+
+                        // Login OK
+                        $window.sessionStorage.jwt = token;
+                        self.state = 'active';
+                    }
+                } catch (e) {
+                    // El token no es válido
                 }
             }
         },
+        api: { // Encapsula llamadas a la API
+            login: function(data) {
+                return $http.post('/auth/login', data).then(function(response) {
+                    return response && response.data;
+                });
+            },
+            getSetting: function(setting) {
+                return $http.get('/auth/settings/' + setting).then(function(response) {
+                    return (response && response.data) || response;
+                });
+            },
+            setSetting: function(setting, value) {
+                return $http.post('/auth/settings/' + setting, {
+                    value: value
+                }).then(function(response) {
+                    return response && response.data;
+                });
+            }
+        }
     };
+
     return self;
 }]);
 
@@ -53216,6 +53288,46 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                 })
         }
     }
+}]);
+
+'use strict';
+
+angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Session', '$http', function($scope, Session, $http) {
+    // Define el modelo
+    angular.extend($scope, {
+        username: null,
+        password: null,
+        error: false,
+        login: function() {
+            var self = this;
+            Session.api.login({
+                username: self.username,
+                password: self.password,
+            }).then(function(data) {
+                Session.init(data.token);
+            }).catch(function(e) {
+                self.error = true;
+            });
+        },
+        // unlock: function () {
+        //     $scope.$broadcast('$plex-before-submit', this.form);
+        //     if (this.form.$valid)
+        //         // El servicio SSO hace un broadcast con el evento indicando que se desbloqueó (i.e. de esta manera Plex actualiza la UI)
+        //         SSO.unlock(this.password).catch(function () {
+        //             $scope.error = true;
+        //             $scope.password = null;
+        //         });
+        // },
+        // changeUser: function () {
+        //     window.location = "/dotnet/SSO/Logout.aspx?relogin=1&url=" + encodeURIComponent(window.location);
+        // },
+        // close: function () {
+        //     window.location = "/dotnet/SSO/Logout.aspx";
+        // },
+        // onChangePassword: function () {
+        //     $scope.error = false;
+        // }
+    });
 }]);
 
 //! moment.js
@@ -62811,6 +62923,7 @@ textAngular.directive('textAngularToolbar', [
  **/
 angular.module('plex', []);
 
+
 'use strict';
 
 /**
@@ -62822,7 +62935,7 @@ angular.module('plex', []);
  * Permite interactuar con la UI
  *
  **/
-angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "SSO", function ($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, SSO) {
+angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "Session", function($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, Session) {
     var self = {
         /*
         ViewStack es un array de objetos son las siguientes propiedades:
@@ -62853,109 +62966,66 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             bigCount: 0,
             showSmall: false,
             showBig: false,
-            update: function (value, useBig) // Indica que la aplicación está cargando datos, o bien que ha finalizado
-            {
-                if (useBig) {
-                    if (value)
-                        this.bigCount++;
-                    else if (this.bigCount > 0)
-                        this.bigCount--;
-                    this.showBig = this.bigCount > 0;
-                } else {
-                    if (value)
-                        this.smallCount++;
-                    else if (this.smallCount > 0)
-                        this.smallCount--;
-                    this.showSmall = this.smallCount > 0;
+            update: function(value, useBig) // Indica que la aplicación está cargando datos, o bien que ha finalizado
+                {
+                    if (useBig) {
+                        if (value)
+                            this.bigCount++;
+                        else if (this.bigCount > 0)
+                            this.bigCount--;
+                        this.showBig = this.bigCount > 0;
+                    } else {
+                        if (value)
+                            this.smallCount++;
+                        else if (this.smallCount > 0)
+                            this.smallCount--;
+                        this.showSmall = this.smallCount > 0;
+                    }
                 }
-            }
         },
-        actions: [],        // Acciones que se muestran en el footer. Es un array de {title, icon, [url | handler], visible, disabled}
-        menuActions: null,  // Acciones que se muestran en menú a la izquierda del nav-bar
-        userActions: [
-            {
-                text: "<i class=\"fa fa-lock\"></i><span>Bloquear sesión</span>",
-                click: function () {
-                    self.sessionLock(true);
-                }
-            },
-            {
+        actions: [], // Acciones que se muestran en el footer. Es un array de {title, icon, [url | handler], visible, disabled}
+        menuActions: null, // Acciones que se muestran en menú a la izquierda del nav-bar
+        userActions: [{
                 text: "<i class=\"fa fa-sign-out\"></i><span>Cerrar sesión</span>",
-                click: function () {
-                    window.location = "/dotnet/SSO/Logout.aspx";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-user\"></i><span>Cambiar usuario</span>",
-                click: function () {
-                    window.location = "/dotnet/SSO/Logout.aspx?relogin=1&url=" + encodeURIComponent(window.location);
-                }
-            },
-            {
-                divider: true
-            },
-            {
-                text: "<i class=\"fa fa-gear\"></i><span>Opciones de usuario</span>",
-                click: function () {
-                    window.location = "/dotnet/SSO/Options.aspx?url=" + encodeURIComponent(window.location);
-                }
-            },
-            {
-                divider: true
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-cosmo\"></i><span>Cosmo</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.cosmo.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-flatly\"></i><span>Flatly</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.flatly.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-amelia\"></i><span>Amelia</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.amelia.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-slate\"></i><span>Slate</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.slate.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-superhero\"></i><span>Superhero</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.superhero.css";
+                click: function() {
+                    Session.logout();
                 }
             }
+            // {
+            //     divider: true
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-cosmo\"></i><span>Cosmo</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.cosmo.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-flatly\"></i><span>Flatly</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.flatly.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-amelia\"></i><span>Amelia</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.amelia.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-slate\"></i><span>Slate</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.slate.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-superhero\"></i><span>Superhero</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.superhero.css";
+            //     }
+            // }
         ],
-        sessionLockModal: null,
-        sessionLock: function (doLock) {
-            if (!self.sessionLockModal) {
-                self.sessionLockModal = "dummy"; // Hasta que resuelta la promise. Evita duplicar el popup
-
-                var showFn = function () {
-                    self.sessionLockModal = $modal({
-                        contentTemplate: '/Lib/1.1/html/ssoLock.html',
-                        show: true,
-                        keyboard: false,
-                        backdrop: 'static',
-                        placement: 'center'
-                    });
-                };
-
-                if (doLock)
-                    SSO.lock().then(function () { showFn() });
-                else
-                    showFn();
-            }
-        },
-        submitForm: function () {
+        submitForm: function() {
             var form = self.currentView().form;
             if (!form.isSubmitting) {
                 $rootScope.$broadcast('$plex-before-submit', form.controller)
@@ -62970,10 +63040,10 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                         // Is it a promise?
                         if (angular.isDefined(result.finally))
                             result
-                            .then(function () {
+                            .then(function() {
                                 form.controller.$setPristine(true);
                             })
-                            .finally(function () {
+                            .finally(function() {
                                 form.isSubmitting = false;
                             });
                         else {
@@ -62982,23 +63052,21 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                                 form.controller.$setPristine(true);
                             }
                         }
-                    }
-                    else {
+                    } else {
                         form.isSubmitting = false;
                         form.controller.$setPristine(true);
                     }
-                }
-                else {
+                } else {
                     self.showWarning('Por favor verifique los datos ingresados');
                 }
                 $rootScope.$broadcast('$plex-after-submit', form.controller);
             }
         },
-        cancelForm: function () {
+        cancelForm: function() {
             var handler = self.currentView().form.cancelHandler;
             if (handler) handler();
         },
-        isFormValid: function (showErrors) {
+        isFormValid: function(showErrors) {
             var form = self.currentView().form;
             if (form) {
                 if (form.controller.$valid)
@@ -63006,8 +63074,8 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 else {
                     if (showErrors) {
                         // Marca los controladores como modificados para que muestren los errores
-                        angular.forEach(form.controller.$error, function (property) {
-                            angular.forEach(property, function (controller) {
+                        angular.forEach(form.controller.$error, function(property) {
+                            angular.forEach(property, function(controller) {
                                 //controller.$setPristine(false);
                                 controller.$setViewValue(controller.$viewValue);
                             });
@@ -63015,8 +63083,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                     }
                     return false;
                 }
-            }
-            else
+            } else
                 return true;
         },
         /**
@@ -63030,7 +63097,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.showError("El dato ingresado es incorrecto")
          **/
-        showError: function (message) {
+        showError: function(message) {
             if (!message)
                 message = "No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...";
             self.error.title = message;
@@ -63047,7 +63114,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.showWarning("El dato ingresado es incorrecto")
          **/
-        showWarning: function (message) {
+        showWarning: function(message) {
             self.warning.title = message;
             self.warning.show = true;
         },
@@ -63062,7 +63129,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.showInfo("El dato ingresado es incorrecto")
          **/
-        showInfo: function (message) {
+        showInfo: function(message) {
             self.info.title = message;
             self.info.show = true;
         },
@@ -63071,25 +63138,24 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
         //    self.warning.show = false;
         //    self.info.show = false;
         //},
-        addView: function (view) {
+        addView: function(view) {
             angular.extend(view, {
-                ui: {                        // Será inicializado cuando el controlador llame a initView()
+                ui: { // Será inicializado cuando el controlador llame a initView()
                     title: null,
                     subtitle: null,
                     actions: null
                 },
-                form: null                   // Será inicializado en linkForm()
+                form: null // Será inicializado en linkForm()
             });
             self.viewStack.push(view);
             self.currentView(view);
             return view;
         },
-        currentView: function (view) {
+        currentView: function(view) {
             if (view) {
                 self.currentViewIndex = self.viewStack.indexOf(view);
                 return view;
-            }
-            else {
+            } else {
                 return angular.isNumber(self.currentViewIndex) ? self.viewStack[self.currentViewIndex] : null;
             }
         },
@@ -63105,12 +63171,12 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.openView("/myRoute").then(function(returnValue) { ... })
          **/
-        openView: function (path) {
+        openView: function(path) {
             console.log(path);
             var deferred = $q.defer();
-            Global.waitInit().then(function () {
+            Global.waitInit().then(function() {
                 // Muestra la vista (usa $timeout para no romper el ciclo de rendering)
-                $timeout(function () {
+                $timeout(function() {
                     $rootScope.$broadcast('$plex-openView', {
                         route: PlexResolver.resolve(path.indexOf('/') != 0 ? '/' + path : path),
                         deferred: deferred
@@ -63130,7 +63196,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.closeView(true);
          **/
-        closeView: function (returnValue) {
+        closeView: function(returnValue) {
             //if (self.currentViewIndex > 0) {
             //    var view = self.currentView();
             //    // Usa $timeout para no romper el ciclo de rendering
@@ -63141,7 +63207,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             //}
 
             // Usa $timeout para no romper el ciclo de rendering
-            $timeout(function () {
+            $timeout(function() {
                 if (self.currentViewIndex > 0) {
                     var view = self.currentView();
                     $window.history.back();
@@ -63149,16 +63215,16 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 }
             }, 50);
         },
-        openDialog: function (url) {
+        openDialog: function(url) {
             // TODO: Abrir un modal
             $window.open(url);
         },
-        initUI: function () {
+        initUI: function() {
             var currentView = self.currentView();
             self.title = currentView.ui.title;
             self.subtitle = currentView.ui.subtitle;
             self.actions = [];
-            angular.forEach(currentView.ui.actions, function (a) {
+            angular.forEach(currentView.ui.actions, function(a) {
                 if ((!angular.isDefined(a.visible)) || a.visible)
                     self.actions.push(a);
             });
@@ -63189,7 +63255,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 }]
             });
          **/
-        initView: function (settings) {
+        initView: function(settings) {
             // Esta función es llamada por el controlador para inicializar la vista
             var currentView = self.currentView();
 
@@ -63197,12 +63263,12 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             if (settings.actions) {
                 for (var i = 0; i < settings.actions.length; i++) {
                     var action = settings.actions[i];
-                    action.action = function () {
+                    action.action = function() {
                         if (this.handler)
                             this.handler();
                         else
-                            if (this.url)
-                                self.openView(this.url);
+                        if (this.url)
+                            self.openView(this.url);
                     }
                 }
             }
@@ -63211,59 +63277,35 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             angular.extend(currentView.ui, settings);
             self.initUI();
         },
-        initApplication: function (applicationId) {
-            // Obtiene el menú de la aplicación actual
-            SSO.menu(applicationId).then(function (data) {
-                // Arma el menú
-                self.menuActions = [];
-                if (data.length) {
-                    self.menuActions = data[0].items.map(function (i) {
-                        return {
-                            text: i.text,
-                            click: function () {
-                            }
-                        }
+        initApplication: function(applicationId) {
+            self.menuActions = [{
+                text: "<i class=\"fa fa-home\"></i><span>Volver a la Intranet</span>",
+                click: function() {
+                    window.location = "/";
+                }
+            }, {
+                divider: true
+            }, {
+                text: "<i class=\"fa fa-user\"></i><span>¿Problemas de identificación del paciente o datos desactualizados?</span>",
+                click: function() {
+                    self.openView('/feedback/paciente');
+                }
+            }, {
+                text: "<i class=\"fa fa-flag\"></i><span>¿Diagnóstico/problema no encontrado o con nombre confuso?</span>",
+                click: function() {
+                    self.openView('/feedback/diagnostico');
+                }
+            }, {
+                text: "<i class=\"fa fa-comments\"></i><span>Reportar una sugerencia o problema de la aplicación</span>",
+                click: function() {
+                    $q.when(self.currentView().route, function(route) {
+                        // TODO: debería estar la URL final (i.e. con los parámetros incorporados)
+                        self.openView('/feedback/app/' + encodeURIComponent(route.originalPath) + ' ' + JSON.stringify(route.params) + '/' + encodeURIComponent(route.controller));
                     });
                 }
-
-                self.menuActions = self.menuActions.concat([
-                    //{
-                    //    divider: true
-                    //},
-                    {
-                        text: "<i class=\"fa fa-home\"></i><span>Volver a la Intranet</span>",
-                        click: function () {
-                            window.location = "/";
-                        }
-                    },
-                    {
-                        divider: true
-                    },
-                    {
-                        text: "<i class=\"fa fa-user\"></i><span>¿Problemas de identificación del paciente o datos desactualizados?</span>",
-                        click: function () {
-                            self.openView('/feedback/paciente');
-                        }
-                    },
-                    {
-                        text: "<i class=\"fa fa-flag\"></i><span>¿Diagnóstico/problema no encontrado o con nombre confuso?</span>",
-                        click: function () {
-                            self.openView('/feedback/diagnostico');
-                        }
-                    },
-                    {
-                        text: "<i class=\"fa fa-comments\"></i><span>Reportar una sugerencia o problema de la aplicación</span>",
-                        click: function () {
-                            $q.when(self.currentView().route, function (route) {
-                                // TODO: debería estar la URL final (i.e. con los parámetros incorporados)
-                                self.openView('/feedback/app/' + encodeURIComponent(route.originalPath) + ' ' + JSON.stringify(route.params) + '/' + encodeURIComponent(route.controller));
-                            });
-                        }
-                    }
-                ]);
-            });
+            }];
         },
-        linkForm: function (controller, submitHandler, cancelHandler) { // Esta función es llamada por la directiva plexForm
+        linkForm: function(controller, submitHandler, cancelHandler) { // Esta función es llamada por la directiva plexForm
             if (!controller)
                 throw "Utilice la directiva plex-form para vincular un formulario a la vista.";
             if (!submitHandler)
@@ -63277,24 +63319,18 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 cancelHandler: cancelHandler
             }
         },
-        unlinkForm: function (controller) { // Esta función es llamada por la directiva plexForm
+        unlinkForm: function(controller) { // Esta función es llamada por la directiva plexForm
             // TODO: Revisar porque esto no funciona bien!!!! El PlexForm->scope.destroy se llama en momentos inadecuados!!!
             // Momentáneamente recorro todas las vistas
 
             //self.currentView().form = null;
-            this.viewStack.forEach(function (view) {
+            this.viewStack.forEach(function(view) {
                 if (view.form && (view.form.controller == controller)) {
                     view.form = null;
                 }
             })
         }
     }
-
-    // Eventos
-    $rootScope.$on("sso-unlock", function () {
-        self.sessionLockModal.hide();
-        self.sessionLockModal = null;
-    });
 
     return self;
 }]);
@@ -63778,6 +63814,27 @@ angular.module('plex').directive('plexSkin', ['Global', '$q', 'SSO', '$http', fu
 
 'use strict'
 
+/**
+ * @ngdoc directive
+ * @module plex
+ * @name plex-filter
+ * @description
+ * Permite aplicar filtros a elementos ```input```
+ *
+ * @example
+    <example module="app" deps="" animate="false">
+    <file name="index.html">
+      <div ng-controller="ExampleController">
+        <input type="text" plex-filter="date:'dd / MMMM'" ng-model="fecha" ng-disabled="true" plex />
+      </div>
+    </file>
+    <file name="main.js">
+      angular.module('app').controller('ExampleController', function($scope){
+          $scope.fecha = new Date();
+      });
+    </file>
+    </example>
+**/
 angular.module('plex').directive("plexFilter", ["$filter", function ($filter) {
     return {
         require: 'ngModel',
@@ -63794,6 +63851,7 @@ angular.module('plex').directive("plexFilter", ["$filter", function ($filter) {
         }
     }
 }]);
+
 'use strict'
 
 /**
@@ -64289,6 +64347,7 @@ angular.module('plex').directive("plexSubmit", ["$parse", function ($parse) {
     return {
         restrict: "A",
         require: '^form',
+        scope: false,
         link: function (scope, element, attrs, formController) {
             var fn = $parse(attrs.plexSubmit);
             element.on('click', function (event) {
@@ -65155,6 +65214,7 @@ var requiredModules = [
     'pasvaz.bindonce',
     'ngFileUpload',
     'textAngular',
+    'angular-jwt',
     // Salud
     'global',
     'plex'
@@ -65216,7 +65276,7 @@ angular
             else {
                 return data;
             }
-        })        
+        })
     }])
     .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {

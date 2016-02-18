@@ -1,4 +1,5 @@
-﻿'use strict';
+﻿
+'use strict';
 
 /**
  *
@@ -9,7 +10,7 @@
  * Permite interactuar con la UI
  *
  **/
-angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "SSO", function ($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, SSO) {
+angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "Session", function($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, Session) {
     var self = {
         /*
         ViewStack es un array de objetos son las siguientes propiedades:
@@ -40,109 +41,66 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             bigCount: 0,
             showSmall: false,
             showBig: false,
-            update: function (value, useBig) // Indica que la aplicación está cargando datos, o bien que ha finalizado
-            {
-                if (useBig) {
-                    if (value)
-                        this.bigCount++;
-                    else if (this.bigCount > 0)
-                        this.bigCount--;
-                    this.showBig = this.bigCount > 0;
-                } else {
-                    if (value)
-                        this.smallCount++;
-                    else if (this.smallCount > 0)
-                        this.smallCount--;
-                    this.showSmall = this.smallCount > 0;
+            update: function(value, useBig) // Indica que la aplicación está cargando datos, o bien que ha finalizado
+                {
+                    if (useBig) {
+                        if (value)
+                            this.bigCount++;
+                        else if (this.bigCount > 0)
+                            this.bigCount--;
+                        this.showBig = this.bigCount > 0;
+                    } else {
+                        if (value)
+                            this.smallCount++;
+                        else if (this.smallCount > 0)
+                            this.smallCount--;
+                        this.showSmall = this.smallCount > 0;
+                    }
                 }
-            }
         },
-        actions: [],        // Acciones que se muestran en el footer. Es un array de {title, icon, [url | handler], visible, disabled}
-        menuActions: null,  // Acciones que se muestran en menú a la izquierda del nav-bar
-        userActions: [
-            {
-                text: "<i class=\"fa fa-lock\"></i><span>Bloquear sesión</span>",
-                click: function () {
-                    self.sessionLock(true);
-                }
-            },
-            {
+        actions: [], // Acciones que se muestran en el footer. Es un array de {title, icon, [url | handler], visible, disabled}
+        menuActions: null, // Acciones que se muestran en menú a la izquierda del nav-bar
+        userActions: [{
                 text: "<i class=\"fa fa-sign-out\"></i><span>Cerrar sesión</span>",
-                click: function () {
-                    window.location = "/dotnet/SSO/Logout.aspx";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-user\"></i><span>Cambiar usuario</span>",
-                click: function () {
-                    window.location = "/dotnet/SSO/Logout.aspx?relogin=1&url=" + encodeURIComponent(window.location);
-                }
-            },
-            {
-                divider: true
-            },
-            {
-                text: "<i class=\"fa fa-gear\"></i><span>Opciones de usuario</span>",
-                click: function () {
-                    window.location = "/dotnet/SSO/Options.aspx?url=" + encodeURIComponent(window.location);
-                }
-            },
-            {
-                divider: true
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-cosmo\"></i><span>Cosmo</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.cosmo.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-flatly\"></i><span>Flatly</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.flatly.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-amelia\"></i><span>Amelia</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.amelia.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-slate\"></i><span>Slate</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.slate.css";
-                }
-            },
-            {
-                text: "<i class=\"fa fa-circle plex-skin-icon-superhero\"></i><span>Superhero</span>",
-                click: function () {
-                    self.currentSkin = "/lib/1.1/lib.superhero.css";
+                click: function() {
+                    Session.logout();
                 }
             }
+            // {
+            //     divider: true
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-cosmo\"></i><span>Cosmo</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.cosmo.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-flatly\"></i><span>Flatly</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.flatly.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-amelia\"></i><span>Amelia</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.amelia.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-slate\"></i><span>Slate</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.slate.css";
+            //     }
+            // },
+            // {
+            //     text: "<i class=\"fa fa-circle plex-skin-icon-superhero\"></i><span>Superhero</span>",
+            //     click: function () {
+            //         self.currentSkin = "/lib/1.1/lib.superhero.css";
+            //     }
+            // }
         ],
-        sessionLockModal: null,
-        sessionLock: function (doLock) {
-            if (!self.sessionLockModal) {
-                self.sessionLockModal = "dummy"; // Hasta que resuelta la promise. Evita duplicar el popup
-
-                var showFn = function () {
-                    self.sessionLockModal = $modal({
-                        contentTemplate: '/Lib/1.1/html/ssoLock.html',
-                        show: true,
-                        keyboard: false,
-                        backdrop: 'static',
-                        placement: 'center'
-                    });
-                };
-
-                if (doLock)
-                    SSO.lock().then(function () { showFn() });
-                else
-                    showFn();
-            }
-        },
-        submitForm: function () {
+        submitForm: function() {
             var form = self.currentView().form;
             if (!form.isSubmitting) {
                 $rootScope.$broadcast('$plex-before-submit', form.controller)
@@ -157,10 +115,10 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                         // Is it a promise?
                         if (angular.isDefined(result.finally))
                             result
-                            .then(function () {
+                            .then(function() {
                                 form.controller.$setPristine(true);
                             })
-                            .finally(function () {
+                            .finally(function() {
                                 form.isSubmitting = false;
                             });
                         else {
@@ -169,23 +127,21 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                                 form.controller.$setPristine(true);
                             }
                         }
-                    }
-                    else {
+                    } else {
                         form.isSubmitting = false;
                         form.controller.$setPristine(true);
                     }
-                }
-                else {
+                } else {
                     self.showWarning('Por favor verifique los datos ingresados');
                 }
                 $rootScope.$broadcast('$plex-after-submit', form.controller);
             }
         },
-        cancelForm: function () {
+        cancelForm: function() {
             var handler = self.currentView().form.cancelHandler;
             if (handler) handler();
         },
-        isFormValid: function (showErrors) {
+        isFormValid: function(showErrors) {
             var form = self.currentView().form;
             if (form) {
                 if (form.controller.$valid)
@@ -193,8 +149,8 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 else {
                     if (showErrors) {
                         // Marca los controladores como modificados para que muestren los errores
-                        angular.forEach(form.controller.$error, function (property) {
-                            angular.forEach(property, function (controller) {
+                        angular.forEach(form.controller.$error, function(property) {
+                            angular.forEach(property, function(controller) {
                                 //controller.$setPristine(false);
                                 controller.$setViewValue(controller.$viewValue);
                             });
@@ -202,8 +158,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                     }
                     return false;
                 }
-            }
-            else
+            } else
                 return true;
         },
         /**
@@ -217,7 +172,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.showError("El dato ingresado es incorrecto")
          **/
-        showError: function (message) {
+        showError: function(message) {
             if (!message)
                 message = "No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...";
             self.error.title = message;
@@ -234,7 +189,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.showWarning("El dato ingresado es incorrecto")
          **/
-        showWarning: function (message) {
+        showWarning: function(message) {
             self.warning.title = message;
             self.warning.show = true;
         },
@@ -249,7 +204,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.showInfo("El dato ingresado es incorrecto")
          **/
-        showInfo: function (message) {
+        showInfo: function(message) {
             self.info.title = message;
             self.info.show = true;
         },
@@ -258,25 +213,24 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
         //    self.warning.show = false;
         //    self.info.show = false;
         //},
-        addView: function (view) {
+        addView: function(view) {
             angular.extend(view, {
-                ui: {                        // Será inicializado cuando el controlador llame a initView()
+                ui: { // Será inicializado cuando el controlador llame a initView()
                     title: null,
                     subtitle: null,
                     actions: null
                 },
-                form: null                   // Será inicializado en linkForm()
+                form: null // Será inicializado en linkForm()
             });
             self.viewStack.push(view);
             self.currentView(view);
             return view;
         },
-        currentView: function (view) {
+        currentView: function(view) {
             if (view) {
                 self.currentViewIndex = self.viewStack.indexOf(view);
                 return view;
-            }
-            else {
+            } else {
                 return angular.isNumber(self.currentViewIndex) ? self.viewStack[self.currentViewIndex] : null;
             }
         },
@@ -292,12 +246,12 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.openView("/myRoute").then(function(returnValue) { ... })
          **/
-        openView: function (path) {
+        openView: function(path) {
             console.log(path);
             var deferred = $q.defer();
-            Global.waitInit().then(function () {
+            Global.waitInit().then(function() {
                 // Muestra la vista (usa $timeout para no romper el ciclo de rendering)
-                $timeout(function () {
+                $timeout(function() {
                     $rootScope.$broadcast('$plex-openView', {
                         route: PlexResolver.resolve(path.indexOf('/') != 0 ? '/' + path : path),
                         deferred: deferred
@@ -317,7 +271,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
          *
          *      Plex.closeView(true);
          **/
-        closeView: function (returnValue) {
+        closeView: function(returnValue) {
             //if (self.currentViewIndex > 0) {
             //    var view = self.currentView();
             //    // Usa $timeout para no romper el ciclo de rendering
@@ -328,7 +282,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             //}
 
             // Usa $timeout para no romper el ciclo de rendering
-            $timeout(function () {
+            $timeout(function() {
                 if (self.currentViewIndex > 0) {
                     var view = self.currentView();
                     $window.history.back();
@@ -336,16 +290,16 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 }
             }, 50);
         },
-        openDialog: function (url) {
+        openDialog: function(url) {
             // TODO: Abrir un modal
             $window.open(url);
         },
-        initUI: function () {
+        initUI: function() {
             var currentView = self.currentView();
             self.title = currentView.ui.title;
             self.subtitle = currentView.ui.subtitle;
             self.actions = [];
-            angular.forEach(currentView.ui.actions, function (a) {
+            angular.forEach(currentView.ui.actions, function(a) {
                 if ((!angular.isDefined(a.visible)) || a.visible)
                     self.actions.push(a);
             });
@@ -376,7 +330,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 }]
             });
          **/
-        initView: function (settings) {
+        initView: function(settings) {
             // Esta función es llamada por el controlador para inicializar la vista
             var currentView = self.currentView();
 
@@ -384,12 +338,12 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             if (settings.actions) {
                 for (var i = 0; i < settings.actions.length; i++) {
                     var action = settings.actions[i];
-                    action.action = function () {
+                    action.action = function() {
                         if (this.handler)
                             this.handler();
                         else
-                            if (this.url)
-                                self.openView(this.url);
+                        if (this.url)
+                            self.openView(this.url);
                     }
                 }
             }
@@ -398,59 +352,35 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             angular.extend(currentView.ui, settings);
             self.initUI();
         },
-        initApplication: function (applicationId) {
-            // Obtiene el menú de la aplicación actual
-            SSO.menu(applicationId).then(function (data) {
-                // Arma el menú
-                self.menuActions = [];
-                if (data.length) {
-                    self.menuActions = data[0].items.map(function (i) {
-                        return {
-                            text: i.text,
-                            click: function () {
-                            }
-                        }
+        initApplication: function(applicationId) {
+            self.menuActions = [{
+                text: "<i class=\"fa fa-home\"></i><span>Volver a la Intranet</span>",
+                click: function() {
+                    window.location = "/";
+                }
+            }, {
+                divider: true
+            }, {
+                text: "<i class=\"fa fa-user\"></i><span>¿Problemas de identificación del paciente o datos desactualizados?</span>",
+                click: function() {
+                    self.openView('/feedback/paciente');
+                }
+            }, {
+                text: "<i class=\"fa fa-flag\"></i><span>¿Diagnóstico/problema no encontrado o con nombre confuso?</span>",
+                click: function() {
+                    self.openView('/feedback/diagnostico');
+                }
+            }, {
+                text: "<i class=\"fa fa-comments\"></i><span>Reportar una sugerencia o problema de la aplicación</span>",
+                click: function() {
+                    $q.when(self.currentView().route, function(route) {
+                        // TODO: debería estar la URL final (i.e. con los parámetros incorporados)
+                        self.openView('/feedback/app/' + encodeURIComponent(route.originalPath) + ' ' + JSON.stringify(route.params) + '/' + encodeURIComponent(route.controller));
                     });
                 }
-
-                self.menuActions = self.menuActions.concat([
-                    //{
-                    //    divider: true
-                    //},
-                    {
-                        text: "<i class=\"fa fa-home\"></i><span>Volver a la Intranet</span>",
-                        click: function () {
-                            window.location = "/";
-                        }
-                    },
-                    {
-                        divider: true
-                    },
-                    {
-                        text: "<i class=\"fa fa-user\"></i><span>¿Problemas de identificación del paciente o datos desactualizados?</span>",
-                        click: function () {
-                            self.openView('/feedback/paciente');
-                        }
-                    },
-                    {
-                        text: "<i class=\"fa fa-flag\"></i><span>¿Diagnóstico/problema no encontrado o con nombre confuso?</span>",
-                        click: function () {
-                            self.openView('/feedback/diagnostico');
-                        }
-                    },
-                    {
-                        text: "<i class=\"fa fa-comments\"></i><span>Reportar una sugerencia o problema de la aplicación</span>",
-                        click: function () {
-                            $q.when(self.currentView().route, function (route) {
-                                // TODO: debería estar la URL final (i.e. con los parámetros incorporados)
-                                self.openView('/feedback/app/' + encodeURIComponent(route.originalPath) + ' ' + JSON.stringify(route.params) + '/' + encodeURIComponent(route.controller));
-                            });
-                        }
-                    }
-                ]);
-            });
+            }];
         },
-        linkForm: function (controller, submitHandler, cancelHandler) { // Esta función es llamada por la directiva plexForm
+        linkForm: function(controller, submitHandler, cancelHandler) { // Esta función es llamada por la directiva plexForm
             if (!controller)
                 throw "Utilice la directiva plex-form para vincular un formulario a la vista.";
             if (!submitHandler)
@@ -464,24 +394,18 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 cancelHandler: cancelHandler
             }
         },
-        unlinkForm: function (controller) { // Esta función es llamada por la directiva plexForm
+        unlinkForm: function(controller) { // Esta función es llamada por la directiva plexForm
             // TODO: Revisar porque esto no funciona bien!!!! El PlexForm->scope.destroy se llama en momentos inadecuados!!!
             // Momentáneamente recorro todas las vistas
 
             //self.currentView().form = null;
-            this.viewStack.forEach(function (view) {
+            this.viewStack.forEach(function(view) {
                 if (view.form && (view.form.controller == controller)) {
                     view.form = null;
                 }
             })
         }
     }
-
-    // Eventos
-    $rootScope.$on("sso-unlock", function () {
-        self.sessionLockModal.hide();
-        self.sessionLockModal = null;
-    });
 
     return self;
 }]);
