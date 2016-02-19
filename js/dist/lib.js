@@ -53110,7 +53110,6 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
     return self;
 }]);
 
-
 'use strict';
 
 angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global", "Session", function(Plex, $http, $window, Global, Session) {
@@ -53127,7 +53126,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
             method: method,
             url: url,
             data: options.minify ? Global.minify(data) : data,
-            cache : options.cache,
+            cache: options.cache,
             params: options.params,
         };
 
@@ -53143,26 +53142,26 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                 }
                 return response;
             })
-            .error(function(response) {
+            .error(function(response, status) {
+                debugger;
                 if (options.updateUI) {
-                    if (response && response.statusCode)
-                        switch (response.statusCode) {
-                            case 401:
-                            case 403:
-                                Session.login();
-                                break;
-                                //    case 405:
-                                //        if (response.response && response.response.data && response.response.data.responseStatus && response.response.data.responseStatus.message)
-                                //            Plex.showWarning(response.response.data.responseStatus.message);
-                                //        else
-                                //            Plex.showError();
-                                //        break;
-                            default:
-                                Plex.showError();
-                        }
-                    else
-                        Plex.showError();
                     Plex.loading.update(false, options.updateUI == "big");
+
+                    debugger;
+                    switch (status) {
+                        case 401:
+                        case 403:
+                            Session.login();
+                            break;
+                        case 400:
+                            if (response && response.message)
+                                Plex.showWarning(response.message);
+                            else
+                                Plex.showError();
+                            break;
+                        default:
+                            Plex.showError();
+                    }
                 }
                 return response;
             })
