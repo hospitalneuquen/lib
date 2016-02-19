@@ -31,6 +31,7 @@ module.exports = function(grunt) {
                 separator: '\n',
             },
             js: { // Archivos .js
+                nonull: true,
                 dest: './js/dist/lib.js',
                 src: [
                     'bower_components/jquery/dist/jquery.js',
@@ -76,7 +77,6 @@ module.exports = function(grunt) {
                     'js/src/global/modules/Global.js',
                     'js/src/global/services/Global.js',
                     'js/src/global/services/Session.js',
-                    'js/src/global/services/SSO.js',
                     'js/src/global/services/Server.js',
                     'js/src/global/controllers/session.js',
 
@@ -121,6 +121,7 @@ module.exports = function(grunt) {
                 ]
             },
             svgEdit: { // Archivos .js
+                nonull: true,
                 dest: './js/dist/plex-canvas/svg-editor.min.js',
                 src: [
                     'js/src/plex/lib/svg-edit/js-hotkeys/jquery.hotkeys.min.js',
@@ -155,6 +156,7 @@ module.exports = function(grunt) {
                 ]
             },
             cosmo: { // Archivos .css generados por la tarea 'less'
+                nonull: true,
                 src: [
                     'css/src/plex/global.css',
                     'css/src/bootswatch/cosmo/build.css',
