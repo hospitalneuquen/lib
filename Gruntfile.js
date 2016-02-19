@@ -44,6 +44,8 @@ module.exports = function(grunt) {
                     // UI
                     'bower_components/angular-strap/dist/modules/compiler.js',
                     'bower_components/angular-strap/dist/modules/affix.js',
+                    'bower_components/angular-strap/dist/modules/alert.js',
+                    'bower_components/angular-strap/dist/modules/alert.tpl.js',
                     'bower_components/angular-strap/dist/modules/button.js',
                     'bower_components/angular-strap/dist/modules/tooltip.js',
                     'bower_components/angular-strap/dist/modules/tooltip.tpl.js',

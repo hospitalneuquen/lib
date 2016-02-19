@@ -36,6 +36,10 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
             show: false,
             title: undefined
         },
+        success: {
+            show: false,
+            title: undefined
+        },
         loading: {
             smallCount: 0,
             bigCount: 0,
@@ -207,6 +211,21 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
         showInfo: function(message) {
             self.info.title = message;
             self.info.show = true;
+        },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#showSuccess
+         * @param {String} message Mensaje a mostrar
+         * @description Muestra un mensaje de operacion exitosa.
+         *
+         * Ejemplo:
+         *
+         *      Plex.showSuccess("Datos del paciente guardados")
+         **/
+        showSuccess: function(message) {
+            self.success.title = message;
+            self.success.show = true;
         },
         //clearAlerts: function () {
         //    self.error.show = false;

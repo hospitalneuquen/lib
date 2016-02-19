@@ -7,6 +7,7 @@ var requiredModules = [
     //'mgcrea.ngStrap',
     'mgcrea.ngStrap.core',
     'mgcrea.ngStrap.affix',
+    'mgcrea.ngStrap.alert',
     'mgcrea.ngStrap.button',
     'mgcrea.ngStrap.datepicker',
     'mgcrea.ngStrap.dropdown',

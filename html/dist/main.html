@@ -22,6 +22,12 @@
         <h3><i class="fa fa-info-circle"></i><span ng-bind="Plex.info.title"></span></h3>
     </div>
 </div>
+<div class="alert alert-success app-success" ng-show="Plex.success.show" ng-click="Plex.success.show = false">
+    <div class="container">
+        <br />
+        <h3><i class="fa fa-info-circle"></i><span ng-bind="Plex.success.title"></span></h3>
+    </div>
+</div>
 <header class="navbar navbar-default navbar-fixed-top">
     <div class="container">
         <ul class="nav navbar-nav pull-left">
