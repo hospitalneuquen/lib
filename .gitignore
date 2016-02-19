@@ -7,3 +7,5 @@ docs/docs/bower_components
 docs/dist
 docs/dist/plex-canvas
 docs/node_modules
+css/dist
+js/dist 
