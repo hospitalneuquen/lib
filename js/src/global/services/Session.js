@@ -59,7 +59,7 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
         isActive: function() {
             if (self.state == 'inactive') {
                 // Inicia la sesión desde un token almacenado (si existe)
-                self.init($window.sessionStorage.jwt);
+                self.login($window.sessionStorage.jwt);
             }
             return self.state == 'active';
         },
@@ -82,11 +82,11 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
         /**
          *
          * @ngdoc method
-         * @name Session#init
+         * @name Session#login
          * @param {Object} data Datos de la sesión
          * @description Inicializa la sesión con los datos suministrados
          **/
-        init: function(token) {
+        login: function(token) {
             self.logout();
 
             // Json Web Token (JWT)
@@ -113,6 +113,23 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
                     // El token no es válido
                 }
             }
+        },
+
+        /**
+         *
+         * @ngdoc method
+         * @name Session#authRequest
+         * @param {Object} request Request
+         * @description Configura un request http con tokens de autenticación
+         **/
+        authRequest: function(request) {
+            if (sessionStorage.jwt) {
+                if (!request.headers)
+                    request.headers = {};
+
+                request.headers.Authorization = "JWT " + sessionStorage.jwt;
+            }
+            return request;
         },
         api: { // Encapsula llamadas a la API
             login: function(data) {

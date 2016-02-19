@@ -15,10 +15,10 @@
                 <h4>Para tu seguridad las sesiones se bloquean después de algunos minutos de inactividad. Esto ayuda a proteger los datos con los que estabas trabajando.</h4>
             </div>
         </div>
-        <ng-form>
+        <ng-form name="form">
             <div class="row pretty">
                 <div class="col-sm-6"><input type="text" label="Usuario" ng-model="username" ng-required="true" plex plex-focus="true"/></div>
-                <div class="col-sm-6"><input type="password" label="Contraseña" ng-model="password" ng-required="true" plex plex-enter="unlock()" ng-change="onChangePassword()"/></div>
+                <div class="col-sm-6"><input type="password" label="Contraseña" ng-model="password" ng-required="true" plex plex-enter="login()" ng-change="onChangePassword()"/></div>
             </div>
             <div ng-show="error" class="row pretty">
                 <div class="col-sm-12">

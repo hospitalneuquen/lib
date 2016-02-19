@@ -12,7 +12,7 @@ angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Sess
                 username: self.username,
                 password: self.password,
             }).then(function(data) {
-                Session.init(data.token);
+                Session.login(data.token);
             }).catch(function(e) {
                 self.error = true;
             });
