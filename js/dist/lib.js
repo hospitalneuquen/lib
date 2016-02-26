@@ -50205,7 +50205,7 @@ if (angular.version.minor < 3 && angular.version.dot < 14) {
  * AngularJS file upload directives and services. Supoorts: file upload/drop/paste, resume, cancel/abort,
  * progress, resize, thumbnail, preview, validation and CORS
  * @author  Danial  <danial.farid@gmail.com>
- * @version 11.2.3
+ * @version 11.2.0
  */
 
 if (window.XMLHttpRequest && !(window.FileAPI && FileAPI.shouldLoad)) {
@@ -50226,7 +50226,7 @@ if (window.XMLHttpRequest && !(window.FileAPI && FileAPI.shouldLoad)) {
 
 var ngFileUpload = angular.module('ngFileUpload', []);
 
-ngFileUpload.version = '11.2.3';
+ngFileUpload.version = '11.2.0';
 
 ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, $q, $timeout) {
   var upload = this;
@@ -50340,10 +50340,6 @@ ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, 
         throw e;
       });
     } else {
-      if (config._chunkSize) {
-        config._start = 0;
-        config._end = config._start + config._chunkSize;
-      }
       uploadWithAngular();
     }
 
@@ -50426,11 +50422,11 @@ ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, 
     return clone;
   }
 
-  this.isFile = function (file) {
-    return file != null && (file instanceof window.Blob || (file.flashId && file.name && file.size));
-  };
-
   this.upload = function (config, internal) {
+    function isFile(file) {
+      return file != null && (file instanceof window.Blob || (file.flashId && file.name && file.size));
+    }
+
     function toResumeFile(file, formData) {
       if (file._ngfBlob) return file;
       config._file = config._file || file;
@@ -50460,7 +50456,7 @@ ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, 
         }
         if (angular.isString(val)) {
           formData.append(key, val);
-        } else if (upload.isFile(val)) {
+        } else if (isFile(val)) {
           var file = toResumeFile(val, formData);
           var split = key.split(',');
           if (split[1]) {
@@ -50566,21 +50562,6 @@ ngFileUpload.service('UploadBase', ['$http', '$q', '$timeout', function ($http, 
       }
     }
     return str;
-  };
-
-  this.urlToBlob = function(url) {
-    var defer = $q.defer();
-    $http({url: url, method: 'get', responseType: 'arraybuffer'}).then(function (resp) {
-      var arrayBufferView = new Uint8Array(resp.data);
-      var type = resp.headers('content-type') || 'image/WebP';
-      var blob = new window.Blob([arrayBufferView], {type: type});
-      defer.resolve(blob);
-      //var split = type.split('[/;]');
-      //blob.name = url.substring(0, 150).replace(/\W+/g, '') + '.' + (split.length > 1 ? split[1] : 'jpg');
-    }, function (e) {
-      defer.reject(e);
-    });
-    return defer.promise;
   };
 
   this.setDefaults = function (defaults) {
@@ -51376,9 +51357,6 @@ ngFileUpload.service('UploadValidate', ['UploadDataUrl', '$q', '$timeout', funct
     if (ngModel) {
       ngModel.$formatters.push(function (files) {
         if (ngModel.$dirty) {
-          if (files && !angular.isArray(files)) {
-            files = [files];
-          }
           upload.validate(files, ngModel, attr, scope).then(function () {
             upload.applyModelValidation(ngModel, files);
           });
@@ -51840,7 +51818,7 @@ ngFileUpload.service('UploadResize', ['UploadValidate', '$q', function (UploadVa
 
   upload.isResizeSupported = function () {
     var elem = document.createElement('canvas');
-    return window.atob && elem.getContext && elem.getContext('2d') && window.Blob;
+    return window.atob && elem.getContext && elem.getContext('2d');
   };
 
   if (upload.isResizeSupported()) {
@@ -52057,8 +52035,13 @@ ngFileUpload.service('UploadResize', ['UploadValidate', '$q', function (UploadVa
       var promises = [], files = [];
       if (urls.length) {
         angular.forEach(urls, function (url) {
-          promises.push(upload.urlToBlob(url).then(function (blob) {
+          promises.push($http({url: url, method: 'get', responseType: 'arraybuffer'}).then(function (resp) {
+            var arrayBufferView = new Uint8Array(resp.data);
+            var type = resp.headers('content-type') || 'image/WebP';
+            var blob = new window.Blob([arrayBufferView], {type: type});
             files.push(blob);
+            //var split = type.split('[/;]');
+            //blob.name = url.substring(0, 150).replace(/\W+/g, '') + '.' + (split.length > 1 ? split[1] : 'jpg');
           }));
         });
         var defer = $q.defer();
@@ -52251,7 +52234,7 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
     }
   }
 
-  upload.readOrientation = function (file) {
+  upload.readOrientation = function(file) {
     var defer = $q.defer();
     var reader = new FileReader();
     var slicedFile = file.slice(0, 64 * 1024);
@@ -52260,18 +52243,15 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
       return defer.reject(e);
     };
     reader.onload = function (e) {
-      var result = {orientation: 1};
       var view = new DataView(this.result);
-      if (view.getUint16(0, false) !== 0xFFD8) return defer.resolve(result);
-
+      if (view.getUint16(0, false) !== 0xFFD8) return defer.reject();
       var length = view.byteLength,
         offset = 2;
       while (offset < length) {
         var marker = view.getUint16(offset, false);
         offset += 2;
         if (marker === 0xFFE1) {
-          if (view.getUint32(offset += 2, false) !== 0x45786966) return defer.resolve(result);
-
+          if (view.getUint32(offset += 2, false) !== 0x45786966) return defer.reject();
           var little = view.getUint16(offset += 6, false) === 0x4949;
           offset += view.getUint32(offset + 4, little);
           var tags = view.getUint16(offset, little);
@@ -52279,29 +52259,29 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
           for (var i = 0; i < tags; i++)
             if (view.getUint16(offset + (i * 12), little) === 0x0112) {
               var orientation = view.getUint16(offset + (i * 12) + 8, little);
+              var result = {orientation: orientation};
               if (orientation >= 2 && orientation <= 8) {
                 view.setUint16(offset + (i * 12) + 8, 1, little);
                 result.fixedArrayBuffer = e.target.result;
               }
-              result.orientation = orientation;
               return defer.resolve(result);
             }
         } else if ((marker & 0xFF00) !== 0xFF00) break;
         else offset += view.getUint16(offset, false);
       }
-      return defer.resolve(result);
+      defer.reject();
     };
     return defer.promise;
   };
 
-  function arrayBufferToBase64(buffer) {
+  function arrayBufferToBase64( buffer ) {
     var binary = '';
-    var bytes = new Uint8Array(buffer);
+    var bytes = new Uint8Array( buffer );
     var len = bytes.byteLength;
     for (var i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
+      binary += String.fromCharCode( bytes[ i ] );
     }
-    return window.btoa(binary);
+    return window.btoa( binary );
   }
 
   upload.applyExifRotation = function (file) {
@@ -52346,7 +52326,7 @@ ngFileUpload.service('UploadExif', ['UploadResize', '$q', function (UploadResize
     return deferred.promise;
   };
 
-  upload.restoreExif = function (orig, resized) {
+  upload.restoreExif = function(orig, resized) {
     var ExifRestorer = {};
 
     ExifRestorer.KEY_STR = 'ABCDEFGHIJKLMNOP' +
@@ -52998,12 +52978,13 @@ angular.module('global').factory('Global', ['$q', function($q) {
          * @ngdoc method
          * @name Global#minify
          * @param {Object} obj Objeto a minificar
+         * @param {ignoreRootId} options No minifica el objeto principal si tiene un 'id'
          * @description Minifica las propiedades de un objeto de acuerdo a las siguientes reglas:
          *   - Ignora propidades ```null```, ```undefined``` o ```""```
          *   - Ignora arrays sin elementos
-         *   - Si un objeto o subobjeto tiene una propiedad ```id``` sólo devuelve el valor de esa propiedad
+         *   - Si un objeto o subobjeto tiene una propiedad ```id``` sólo devuelve el valor de esa propiedad (excepto si se especifica ```ignoreRootId```)
          **/
-        minify: function(obj) {
+        minify: function(obj, ignoreRootId) {
             var val;
             if (angular.isArray(obj)) {
                 val = [];
@@ -53018,7 +52999,7 @@ angular.module('global').factory('Global', ['$q', function($q) {
                 } else {
                     if (angular.isObject(obj)) {
                         // Si tiene una propiedad "id" devuelve sólo ese valor
-                        if (obj["id"]) {
+                        if (obj["id"] && !ignoreRootId) {
                             val = obj["id"];
                         } else {
                             // Si no, devuelve el objeto completo
@@ -53250,7 +53231,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
         var req = {
             method: method,
             url: url,
-            data: options.minify ? Global.minify(data) : data,
+            data: options.minify ? Global.minify(data, true) : data,
             cache: options.cache,
             params: options.params,
         };
@@ -53268,11 +53249,9 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                 return response;
             })
             .error(function(response, status) {
-                debugger;
                 if (options.updateUI) {
                     Plex.loading.update(false, options.updateUI == "big");
 
-                    debugger;
                     switch (status) {
                         case 401:
                         case 403:

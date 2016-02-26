@@ -230,12 +230,13 @@ angular.module('global').factory('Global', ['$q', function($q) {
          * @ngdoc method
          * @name Global#minify
          * @param {Object} obj Objeto a minificar
+         * @param {ignoreRootId} options No minifica el objeto principal si tiene un 'id'
          * @description Minifica las propiedades de un objeto de acuerdo a las siguientes reglas:
          *   - Ignora propidades ```null```, ```undefined``` o ```""```
          *   - Ignora arrays sin elementos
-         *   - Si un objeto o subobjeto tiene una propiedad ```id``` sólo devuelve el valor de esa propiedad
+         *   - Si un objeto o subobjeto tiene una propiedad ```id``` sólo devuelve el valor de esa propiedad (excepto si se especifica ```ignoreRootId```)
          **/
-        minify: function(obj) {
+        minify: function(obj, ignoreRootId) {
             var val;
             if (angular.isArray(obj)) {
                 val = [];
@@ -250,7 +251,7 @@ angular.module('global').factory('Global', ['$q', function($q) {
                 } else {
                     if (angular.isObject(obj)) {
                         // Si tiene una propiedad "id" devuelve sólo ese valor
-                        if (obj["id"]) {
+                        if (obj["id"] && !ignoreRootId) {
                             val = obj["id"];
                         } else {
                             // Si no, devuelve el objeto completo

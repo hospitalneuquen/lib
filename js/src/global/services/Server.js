@@ -13,7 +13,7 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
         var req = {
             method: method,
             url: url,
-            data: options.minify ? Global.minify(data) : data,
+            data: options.minify ? Global.minify(data, true) : data,
             cache: options.cache,
             params: options.params,
         };
@@ -31,11 +31,9 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                 return response;
             })
             .error(function(response, status) {
-                debugger;
                 if (options.updateUI) {
                     Plex.loading.update(false, options.updateUI == "big");
 
-                    debugger;
                     switch (status) {
                         case 401:
                         case 403:
