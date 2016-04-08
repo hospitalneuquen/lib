@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @ngdoc directive
  * @module plex
@@ -14,17 +12,23 @@
     </file>
     </example>
 **/
-angular.module('plex').directive('plexFocus', function () {
+angular.module('plex').directive('plexFocus', ['$window', function($window) {
     return {
         restrict: 'A',
-        link: function (scope, element, attr) {
-            scope.$watch(attr.plexFocus, function (current) {
-                if (current) {
-                    window.setTimeout(function () {
-                        element[0].focus();
-                    }, 200);
-                }
-            })
+        link: function(scope, element, attr) {
+            if (attr.plexFocus) {
+                scope.$watch(attr.plexFocus, function(current) {
+                    if (current) {
+                        $window.setTimeout(function() {
+                            element[0].focus();
+                        }, 200);
+                    }
+                });
+            } else { // No se especificó ninguna expresión
+                $window.setTimeout(function() {
+                    element[0].focus();
+                }, 200);
+            }
         }
     };
-});
+}]);

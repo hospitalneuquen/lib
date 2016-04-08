@@ -21,10 +21,9 @@ var requiredModules = [
     'mgcrea.ngStrap.helpers.debounce',
     'mgcrea.ngStrap.helpers.dimensions',
     // Other
-    'angularLoad',
     'pasvaz.bindonce',
     'ngFileUpload',
-    'textAngular',
+    //'textAngular',
     'angular-jwt',
     // Salud
     'global',
@@ -50,14 +49,14 @@ angular
         });
 
         // TextAngular
-        $provide.decorator('taOptions', ['taRegisterTool', '$delegate', function (taRegisterTool, taOptions) {
-            taOptions.forceTextAngularSanitize = false;
-            taOptions.toolbar = [
-                ['bold', 'italics', 'underline', 'ul', 'ol', 'redo', 'undo'],
-                ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
-            ];
-            return taOptions;
-        }]);
+        // $provide.decorator('taOptions', ['taRegisterTool', '$delegate', function (taRegisterTool, taOptions) {
+        //     taOptions.forceTextAngularSanitize = false;
+        //     taOptions.toolbar = [
+        //         ['bold', 'italics', 'underline', 'ul', 'ol', 'redo', 'undo'],
+        //         ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
+        //     ];
+        //     return taOptions;
+        // }]);
 
         // Convierte fechas a/de .NET
         $httpProvider.defaults.transformResponse.unshift(function (data) {

@@ -1,6 +1,3 @@
-﻿'use strict';
-
-
 /**
  * @ngdoc directive
  * @module plex
@@ -24,5 +21,5 @@ angular.module('plex').directive("plexSubmit", ["$parse", function ($parse) {
                 });
             });
         }
-    }
+    };
 }]);

@@ -10,7 +10,7 @@
  * Permite interactuar con la UI
  *
  **/
-angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "Session", function($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, Session) {
+angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "Session", "$alert", "$window", function($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, Session, $alert, $window) {
     var self = {
         /*
         ViewStack es un array de objetos son las siguientes propiedades:
@@ -226,6 +226,43 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
         showSuccess: function(message) {
             self.success.title = message;
             self.success.show = true;
+        },
+        /**
+         *
+         * @ngdoc method
+         * @name Plex#alert:
+         * @param {String} message Mensaje a mostrar
+         * @param {String} type info (default) | warning | success
+         * @param {Number} duration Cantidad de tiempo que estará abierto. Por default: 2000ms
+         * @param {Event} event Objeto de evento de la operación actual. Cuando se especifica, la alerta se muestra cerca del elemento relacionado
+         * @description Muestra una alerta al usuario.
+         *
+         * Ejemplo:
+         *
+         *      Plex.alert("Este es un mensaje", "warning", 300)
+         **/
+        alert: function(message, type, duration, event) {
+            var a = $alert({
+                content: message,
+                placement: event && event.target ? 'top-left' : 'top-right',
+                type: type || 'info',
+                show: true,
+                duration: angular.isNumber(duration) ? duration / 1000 : 2,
+                //container: event && event.target ? event.target : false,
+            });
+            a.$promise.then(function(obj) {
+                if (event && event.target) {
+                    var $element = angular.element(obj.element);
+                    var $target = angular.element(event.target);
+                    var $win = angular.element($window);
+                    var offset = $target.offset();
+                    $element.css('margin', 0);
+                    $element.offset({
+                        top: offset.top - $win.scrollTop() - 80,
+                        left: offset.left - $win.scrollLeft()
+                    });
+                }
+            });
         },
         //clearAlerts: function () {
         //    self.error.show = false;
