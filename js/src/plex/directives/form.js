@@ -1,5 +1,3 @@
-﻿'use strict'
-
 angular.module('plex').directive("form", function () {
     return {
         restrict: "E",
@@ -7,5 +5,5 @@ angular.module('plex').directive("form", function () {
             element.attr("novalidate", "novalidate");
             element.attr("autocomplete", "off");
         }
-    }
+    };
 });

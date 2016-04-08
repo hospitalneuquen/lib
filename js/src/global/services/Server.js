@@ -1,5 +1,3 @@
-'use strict';
-
 angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global", "Session", function(Plex, $http, $window, Global, Session) {
     // Private methods
     var request = function(method, url, data, options) {
@@ -55,8 +53,8 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                 if (response && angular.isDefined(response.data))
                     return response.data;
                 else return response;
-            })
-    }
+            });
+    };
 
     // Public methods
     return {
@@ -75,5 +73,5 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
         delete: function(url, data, options) {
             return request("DELETE", url, data, options);
         }
-    }
+    };
 }]);

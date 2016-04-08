@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @ngdoc service
  * @module global
@@ -31,7 +29,7 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
                 self.api.getSetting(name).then(function(value) {
                     self.settings[name] = value;
                     return value;
-                })
+                });
             },
 
             /**
@@ -46,7 +44,7 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
                 self.api.setSetting(setting, value).then(function(value) {
                     self.settings[setting] = value;
                     return value;
-                })
+                });
             }
         },
 
@@ -123,11 +121,11 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
          * @description Configura un request http con tokens de autenticación
          **/
         authRequest: function(request) {
-            if (sessionStorage.jwt) {
+            if ($window.sessionStorage.jwt) {
                 if (!request.headers)
                     request.headers = {};
 
-                request.headers.Authorization = "JWT " + sessionStorage.jwt;
+                request.headers.Authorization = "JWT " + $window.sessionStorage.jwt;
             }
             return request;
         },

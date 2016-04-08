@@ -1,6 +1,4 @@
-'use strict';
-
-angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Session', '$http', function($scope, Session, $http) {
+angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Session', function($scope, Session) {
     // Define el modelo
     angular.extend($scope, {
         username: null,
@@ -13,7 +11,7 @@ angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Sess
                 password: self.password,
             }).then(function(data) {
                 Session.login(data.token);
-            }).catch(function(e) {
+            }).catch(function() {
                 self.error = true;
             });
         },

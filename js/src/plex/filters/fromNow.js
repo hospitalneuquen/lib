@@ -1,5 +1,3 @@
-﻿'use strict'
-
 /**
  * @ngdoc filter
  * @module plex
@@ -37,5 +35,5 @@ angular.module('plex').filter('fromNow', function () {
             return moment(date).fromNow(ignorePrefix);
         else
             return "";
-    }
+    };
 });
