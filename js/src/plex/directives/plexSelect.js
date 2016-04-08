@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * @ngdoc directive
  * @module plex
@@ -34,127 +32,263 @@
       </file>
     </example>
  **/
-angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Global', function ($timeout, $parse, $q, Global) {
+angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Global', function($timeout, $parse, $q, Global) {
     return {
         require: 'ngModel',
-        compile: function (element, attrs) {
-            var watch,
-              repeatOption,
-              repeatAttr,
-              isSelect = false,
-              isMultiple = (attrs.multiple !== undefined),
-              timeout = attrs.timeout || 300;
+        compile: function(element, attrs) {
+            var isMultiple = (attrs.multiple !== undefined),
+                timeout = attrs.timeout || 300;
 
-            // Parse input expression. Eg: (item.documento + ' | ' + item.apellido + ', ' + item.nombre) for item in buscarPorDocumento($value)
+            // Aplica CSS
+            //element.addClass("form-control");
+            element.css('width', '100%');
+
             var inputExpression = attrs.plexSelect;
-            var match = inputExpression.match(/^\s*(.*?)(?:\s+as\s+(.*?))?\s+for\s+(?:([\$\w][\$\w\d]*))\s+in\s+(.*)$/);
-            if (!match) {
-                throw new Error("Expected specification in form of '_modelValue_ (as _label_)? for _item_ in _collection_' but got '" + inputExpression + "'.");
-            }
-            var itemName = match[3];
-            var source = $parse(match[4]);
-            var viewMapper = $parse(match[2] || match[1]);
-            var modelMapper = $parse(match[1]);
+            var match;
+            var itemName;
+            var source;
+            var viewMapper;
+            var isPromise;
+            var hasOptions;
             var timer;
+            var select2;
 
-            return function (scope, element, attrs, controller) {
-                // Init Select2
+            if (inputExpression) {
+                // Parse input expression. Eg: (item.documento + ' | ' + item.apellido + ', ' + item.nombre) for item in buscarPorDocumento($value)
+                match = inputExpression.match(/^\s*(.*?)(?:\s+as\s+(.*?))?\s+for\s+(?:([\$\w][\$\w\d]*))\s+in\s+(.*)$/);
+                if (!match)
+                    throw new Error("Expected specification in form of '_modelValue_ (as _label_)? for _item_ in _collection_' but got '" + inputExpression + "'.");
+
+                itemName = match[3];
+                source = $parse(match[4]);
+                viewMapper = $parse(match[2] || match[1]);
+                isPromise = inputExpression.indexOf("$value") > 0;
+                hasOptions = false;
+            } else {
+                hasOptions = true;
+            }
+
+            return function(scope, element, attrs, controller) {
                 var allowClear = scope.$eval(attrs.allowClear);
-                $timeout(function () {
+                var minimumLength = Number(attrs.min || 0);
+                $timeout(function() {
                     element.select2({
-                        minimumInputLength: attrs.min || null,
+                        theme: "bootstrap",
                         allowClear: allowClear,
                         placeholder: allowClear ? " " : null,
                         multiple: isMultiple,
-                        query: function (query) {
-                            if (timer) {
-                                $timeout.cancel(timer);
-                                timer = null;
-                            }
-                            timer = $timeout(function () {
-                                var locals = { $value: query.term };
-                                $q.when(source(scope, locals)).then(function (matches) {
-                                    // Si "$value" no está definido en inputExpression, asume que 'matches' equivale a todos los valores sin filtrar (i.e. filtramos acá)
-                                    if (matches && query.term && inputExpression.indexOf("$value") < 0) {
-                                        matches = matches.filter(function (i) {
-                                            var locals = {};
-                                            locals[itemName] = i;
-                                            return Global.matchText(query.term, viewMapper(scope, locals));
-                                        })
+                        dataAdapter: function($element, options) {
+                            return {
+                                current: function(callback) {
+                                    if (!controller.$modelValue)
+                                        callback([]);
+                                    else {
+                                        var result = angular.isArray(controller.$modelValue) ? controller.$modelValue : [controller.$modelValue];
+                                        if (hasOptions) {
+                                            callback(result.map(function(i) {
+                                                return {
+                                                    id: i.value,
+                                                    text: i.text
+                                                };
+                                            }));
+                                        } else {
+                                            callback(result.map(function(i) {
+                                                var locals = {};
+                                                locals[itemName] = i;
+                                                return {
+                                                    id: i.id,
+                                                    text: viewMapper(scope, locals),
+                                                };
+                                            }));
+                                        }
                                     }
-                                    query.callback({ results: matches })
-                                    timer = null;
-                                });
-                            }, ((query && query.term) ? timeout : 0));
-                        },
-                        initSelection: function (element, callback) {
-                            element.select2('data', controller.$modelValue) // Setea valor inicial
-                            callback(controller.$modelValue);
-                        },
-                        formatResult: function (result, container, query, escapeMarkup) {
-                            if (result) {
-                                var locals = {};
-                                locals[itemName] = result;
-                                var label = viewMapper(scope, locals);
-                                if (query && query.term) {
-                                    var markup = [];
-                                    Select2.util.markMatch(label, query.term, markup, escapeMarkup);
-                                    return markup.join('');
-                                } else
-                                    return label;
-                            }
-                            else
-                                return null;
-                        },
-                        formatSelection: function (item) {
-                            return this.formatResult(item);
+                                },
+                                select: function(item) {
+                                    var newValue;
+                                    if (isMultiple) {
+                                        if (angular.isArray(controller.$modelValue)) {
+                                            newValue = controller.$modelValue;
+                                            newValue.push(item.dataItem);
+                                        } else {
+                                            newValue = [item.dataItem];
+                                        }
+                                    } else {
+                                        newValue = item.dataItem;
+                                    }
+                                    scope.$apply(function() {
+                                        controller.$setViewValue(newValue);
+                                    });
+                                    $element.trigger('change');
+                                },
+                                unselect: function(data) {
+                                    if (isMultiple) {
+                                        if (angular.isArray(controller.$modelValue)) {
+                                            controller.$modelValue.splice(controller.$modelValue.indexOf(data), 1);
+                                            data = controller.$modelValue;
+                                        } else {
+                                            data = null;
+                                        }
+                                    } else {
+                                        data = null;
+                                    }
+                                    scope.$apply(function() {
+                                        controller.$setViewValue(data);
+                                    });
+                                    $element.trigger('change');
+                                },
+                                bind: function(container, $container) {
+                                    var self = this;
+                                    select2 = container;
+                                    container.on('select', function(params) {
+                                        self.select(params.data);
+                                    });
+                                    container.on('unselect', function(params) {
+                                        self.unselect(params.data);
+                                    });
+                                },
+                                destroy: function() {
+                                    debugger;
+                                },
+                                query: function(params, callback) {
+                                    if (minimumLength > 0 && (!params || !params.term || params.term.length < minimumLength)) {
+                                        select2.trigger('results:message', {
+                                            message: 'inputTooShort',
+                                            args: {
+                                                minimum: minimumLength,
+                                                input: params.term || '',
+                                                params: params
+                                            }
+                                        });
+                                        return;
+                                    }
+
+                                    if (isPromise) {
+                                        if (timer) {
+                                            $timeout.cancel(timer);
+                                            timer = null;
+                                        }
+                                        timer = $timeout(function() {
+                                            var locals = {
+                                                $value: params.term
+                                            };
+                                            $q.when(source(scope, locals)).then(function(matches) {
+                                                callback({
+                                                    results: matches.map(function(i) {
+                                                        var locals = {};
+                                                        locals[itemName] = i;
+                                                        return {
+                                                            id: i.id,
+                                                            text: viewMapper(scope, locals),
+                                                            dataItem: i,
+                                                        };
+                                                    })
+                                                });
+                                                timer = null;
+                                            });
+                                        }, ((params && params.term) ? timeout : 0));
+                                    } else {
+                                        var matches;
+                                        if (hasOptions) {
+                                            matches = [];
+                                            var $options = element.children();
+                                            $options.each(function() {
+                                                var $option = angular.element(this);
+                                                if ($option.is('option') && $option.val() != '? undefined:undefined ?' && (!(params && params.term) || Global.matchText($option.text(), params.term))) {
+                                                    matches.push({
+                                                        id: $option.val(),
+                                                        text: $option.text(),
+                                                        dataItem: {
+                                                            value: $option.val(),
+                                                            text: $option.text()
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                            callback({
+                                                results: matches
+                                            });
+                                        } else {
+                                            matches = source(scope, {});
+                                            if (params && params.term)
+                                                matches = matches.filter(function(i) {
+                                                    var locals = {};
+                                                    locals[itemName] = i;
+                                                    return Global.matchText(viewMapper(scope, locals), params.term);
+                                                });
+                                            callback({
+                                                results: matches.map(function(i) {
+                                                    var locals = {};
+                                                    locals[itemName] = i;
+                                                    return {
+                                                        id: i.id,
+                                                        text: viewMapper(scope, locals),
+                                                        dataItem: i,
+                                                    };
+                                                })
+                                            });
+                                        }
+                                    }
+                                },
+                                listeners: {},
+                                on: function(event, callback) {
+                                    this.listeners = this.listeners || {};
+
+                                    if (event in this.listeners) {
+                                        this.listeners[event].push(callback);
+                                    } else {
+                                        this.listeners[event] = [callback];
+                                    }
+                                },
+                                trigger: function(event) {
+                                    var slice = Array.prototype.slice;
+
+                                    this.listeners = this.listeners || {};
+
+                                    if (event in this.listeners) {
+                                        this.invoke(this.listeners[event], slice.call(arguments, 1));
+                                    }
+
+                                    if ('*' in this.listeners) {
+                                        this.invoke(this.listeners['*'], arguments);
+                                    }
+                                },
+                                invoke: function(listeners, params) {
+                                    for (var i = 0, len = listeners.length; i < len; i++) {
+                                        listeners[i].apply(this, params);
+                                    }
+                                }
+                            };
                         }
-                    });
-
-                    // Datos iniciales
-                    element.select2('data', controller.$modelValue);
-
-                    // Eventos
-                    element.on("select2-close", function () {
-                        // Corrige un bug con el focus
-                        $timeout(function () {
-                            element.select2("focus");
-                        });
-                    });
-                });
-
-                // Watch the model for programmatic changes
-                scope.$watch(attrs.ngModel, function (current, old) {
-                    //console.log("cambio valor: " + JSON.stringify(current));
-                    element.select2('data', controller.$modelValue);
-                }, true);
-
-                // If changed from UI ...
-                element.off('change'); // Remove default angular.js handlers for input[hidden]
-                element.on('change', function () {
-                    var current = element.select2('data');
-                    scope.$apply(function () {
-                        controller.$setViewValue(current);
                     });
                 });
 
                 // Update valid and dirty statuses
-                controller.$parsers.push(function (value) {
+                controller.$parsers.push(function(value) {
                     element.prev().toggleClass('ng-invalid', !controller.$valid)
-                                  .toggleClass('ng-valid', controller.$valid)
-                                  .toggleClass('ng-invalid-required', !controller.$valid)
-                                  .toggleClass('ng-valid-required', controller.$valid)
-                                  .toggleClass('ng-dirty', controller.$dirty)
-                                  .toggleClass('ng-pristine', controller.$pristine);
+                        .toggleClass('ng-valid', controller.$valid)
+                        .toggleClass('ng-invalid-required', !controller.$valid)
+                        .toggleClass('ng-valid-required', controller.$valid)
+                        .toggleClass('ng-dirty', controller.$dirty)
+                        .toggleClass('ng-pristine', controller.$pristine);
                     return value;
                 });
 
                 // Observe property changes
-                attrs.$observe('disabled', function (value) { element.select2('enable', !value); });
-                attrs.$observe('readonly', function (value) { element.select2('readonly', !!value); });
+                attrs.$observe('disabled', function(value) {
+                    element.select2('enable', !value);
+                });
+                attrs.$observe('readonly', function(value) {
+                    element.select2('readonly', !!value);
+                });
 
-                // On destroy
-                element.on("$destroy", function () { element.select2("destroy"); });
+                // Events
+                element.off('change'); // Remove default angular.js handler
+                element.on("$destroy", function() {
+                    element.select2("destroy");
+                });
+                scope.$watch(attrs.ngModel, function() {
+                    element.trigger('change');
+                }, true);
             };
         }
     };

@@ -1,6 +1,4 @@
-'use strict';
-
-angular.module('plex').directive('plexChart', ['angularLoad', function (angularLoad) {
+angular.module('plex').directive('plexChart', ['Global', function (Global) {
     return {
         restrict: 'EAC',
         replace: true,
@@ -10,7 +8,7 @@ angular.module('plex').directive('plexChart', ['angularLoad', function (angularL
             updateWhen: '='
         },
         link: function (scope, element, attrs) {
-            angularLoad.loadScript('/lib/1.1/salud.plex/lib/highcharts/highcharts.js').then(function () {
+            Global.loadScript('/lib-md/js/dist/highcharts.js').then(function(){
                 var chart;
                 var seriesId = 0;
                 var ensureIds = function (series) {
@@ -57,8 +55,7 @@ angular.module('plex').directive('plexChart', ['angularLoad', function (angularL
                         if (ids.indexOf(s.options.id) < 0) {
                             s.remove(false);
                         }
-                    };
-
+                    }
                 };
 
                 // Init
@@ -69,23 +66,7 @@ angular.module('plex').directive('plexChart', ['angularLoad', function (angularL
                 });
 
                 var initialiseChart = function (scope, element, config) {
-                    // 29/05/2015 | jgabriel | Angular 1.4 implementa deep extend con angular.merge()
-                    var extendDeep = function extendDeep(dst) {
-                        angular.forEach(arguments, function (obj) {
-                            if (obj !== dst) {
-                                angular.forEach(obj, function (value, key) {
-                                    if (dst[key] && dst[key].constructor && dst[key].constructor === Object) {
-                                        extendDeep(dst[key], value);
-                                    } else {
-                                        dst[key] = value;
-                                    }
-                                });
-                            }
-                        });
-                        return dst;
-                    };
-
-                    var config = extendDeep({
+                    config = angular.merge({
                         chart: {
                             events: {},
                             renderTo: element[0]
@@ -120,7 +101,7 @@ angular.module('plex').directive('plexChart', ['angularLoad', function (angularL
                         chart.destroy();
                     chart = initialiseChart(scope, element, scope.config);
                 });
-            });            
+            });
         }
     };
 }]);

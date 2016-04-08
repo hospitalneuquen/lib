@@ -1,0 +1,55 @@
+<div ng-controller="/Lib/Controllers/Session">
+    <div class="container">
+        <div class="row pretty">
+            <div ng-show="Session.state == 'inactive'" class="col-sm-12">
+                <h3>
+                    <i class="fa fa-lock"></i>
+                    <span>Iniciar sesión</span>
+                </h3>
+            </div>
+            <div ng-show="Session.state == 'locked'" class="col-sm-12">
+                <h3>
+                    <i class="fa fa-lock"></i>
+                    <span>Sesión bloqueada</span>
+                </h3>
+                <h4>Para tu seguridad las sesiones se bloquean después de algunos minutos de inactividad. Esto ayuda a proteger los datos con los que estabas trabajando.</h4>
+            </div>
+        </div>
+        <ng-form name="form">
+            <div class="row pretty">
+                <div class="col-sm-6"><input type="text" label="Usuario" ng-model="username" ng-required="true" plex plex-focus="true"/></div>
+                <div class="col-sm-6"><input type="password" label="Contraseña" ng-model="password" ng-required="true" plex plex-enter="login()" ng-change="onChangePassword()"/></div>
+            </div>
+            <div ng-show="error" class="row pretty">
+                <div class="col-sm-12">
+                    <div class="alert alert-danger">
+                        <i class="fa fa-warning"></i>
+                        <span>El usuario o contraseña ingresados son incorrectos</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row pretty">
+                <div ng-show="Session.state == 'inactive'" class="col-sm-12">
+                    <a class="btn btn-primary navbar-btn" plex-submit="login()">
+                        <i class="fa fa-lock"></i>
+                        <span>Iniciar sesión</span>
+                    </a>
+                </div>
+                <div ng-show="Session.state == 'locked'" class="col-sm-12">
+                    <a class="btn btn-primary navbar-btn" ng-click="unlock()">
+                        <i class="fa fa-unlock-alt"></i>
+                        <span>Desbloquear</span>
+                    </a>
+                    <a class="btn btn-default navbar-btn hidden-xs" ng-click="changeUser()">
+                        <i class="fa fa-recycle"></i>
+                        <span>Cambiar usuario</span>
+                    </a>
+                    <a class="btn btn-default navbar-btn" ng-click="close()">
+                        <i class="fa fa-times"></i>
+                        <span>Cerrar sesión</span>
+                    </a>
+                </div>
+            </div>
+        </ng-form>
+    </div>
+</div>

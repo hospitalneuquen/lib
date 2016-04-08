@@ -1,24 +1,26 @@
-﻿'use strict'
-
-angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$compile', '$controller', '$q', '$window', '$document', 'Plex', 'PlexResolver', '$animate', '$timeout', function ($rootScope, $anchorScroll, $compile, $controller, $q, $window, $document, Plex, PlexResolver, $animate, $timeout) {
+angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$compile', '$controller', '$q', '$window', '$document', 'Plex', 'PlexResolver', '$animate', '$timeout', function($rootScope, $anchorScroll, $compile, $controller, $q, $window, $document, Plex, PlexResolver, $animate, $timeout) {
     return {
         restrict: 'EA',
         terminal: true,
         transclude: 'element',
-        compile: function (element, attr, linker) {
-            return function (scope, $element, attr) {
+        compile: function(element, attr, linker) {
+            return function(scope, $element, attr) {
                 function toggleViews(old, current) {
                     if (old)
-                        old.element.hide();
-                    current.element.show();
+                        old.element.css({
+                            display: 'none'
+                        });
+                    current.element.css({
+                        display: 'block'
+                    });
                     Plex.currentView(current);
                     Plex.initUI();
                     $window.scrollTo(current.scrollLeft || 0, current.scrollTop || 0);
                 }
 
                 // Abre una nueva vista
-                scope.$on('$plex-openView', function (event, view) {
-                    view.route.then(function (route) {
+                scope.$on('$plex-openView', function(event, view) {
+                    view.route.then(function(route) {
                         // Elimina las vistas que puedan existir hacia adelante
                         var currentIndex = Number($window.history.state) || 0;
                         while (Plex.viewStack.length > currentIndex + 1) {
@@ -33,7 +35,7 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         var locals = route.locals;
                         var template = locals.$template;
                         view.scope = scope.$new();
-                        linker(view.scope, function (clone) {
+                        linker(view.scope, function(clone) {
                             // Prepara la vista anterior
                             var oldView = Plex.viewStack.length > 1 ? Plex.viewStack[Plex.viewStack.length - 2] : null;
                             if (oldView && oldView.element) {
@@ -44,7 +46,7 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                             // Crea una entrada en el browser
                             if (Plex.viewStack.length > 1) {
                                 //$window.history.pushState(Plex.viewStack.length - 1, null, route.originalPath)
-                                $window.history.pushState(Plex.viewStack.length - 1, null, null)
+                                $window.history.pushState(Plex.viewStack.length - 1, null, null);
                             }
 
                             // Prepara el elemento
@@ -79,18 +81,18 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                 });
 
                 // Cierra la vista actual
-                scope.$on('$plex-closeView', function (event, gotoView) {
+                scope.$on('$plex-closeView', function(event, gotoView) {
                     var oldView = Plex.currentView();
                     var view = Plex.viewStack[gotoView];
                     toggleViews(oldView, view);
                 });
 
                 // Responde cuando se navega con los botones Back/Forward en el browser
-                angular.element($window).on('popstate', function (/*event*/) {
+                angular.element($window).on('popstate', function( /*event*/ ) {
                     //var gotoView = Number(event.originalEvent.state) || 0;
                     var gotoView = $window.history.state;
                     // Usa $timeout para no romper el ciclo de rendering de Angular cuando se cierran varias vistas consecutivamente
-                    $timeout(function () {
+                    $timeout(function() {
                         scope.$emit('$plex-closeView', gotoView);
                     });
                     /*
@@ -98,13 +100,13 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         scope.$emit('$plex-closeView', gotoView);
                     });
                     */
-                })
+                });
 
                 // Inicializa la primera página
                 $window.history.replaceState(0, null, null);
-                var path = location.pathname.substr(($document.find('base').attr('href') || '/').length - 1)
+                var path = $window.location.pathname.substr(($document.find('base').attr('href') || '/').length - 1);
                 Plex.openView(path);
-            }
+            };
         }
-    }
+    };
 }]);

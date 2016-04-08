@@ -1,5 +1,3 @@
-﻿'use strict'
-
 /**
  * @ngdoc directive
  * @module plex
@@ -25,7 +23,7 @@ angular.module('plex').directive('plexMax', function () {
             // Validator
             var isEmpty = function (value) {
                 return angular.isUndefined(value) || value === '' || value === null || value !== value;
-            }
+            };
             var validator = function (value) {
                 var val = scope.$eval(attr.plexMax);
                 // 02/10/2015 | jgabriel | Corrije el bug de angular-strap's datepicker que manda un string en vez de date

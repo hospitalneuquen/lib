@@ -1,0 +1,69 @@
+//
+// Bootstrap hacks
+//
+
+textarea {
+    resize: none;
+}
+input[type=radio]:required {
+    outline: none;
+    box-shadow: none;
+}
+
+label.block {
+    margin-top: 10px;
+    display: block;
+}
+label.block:first-child {
+    margin-top: inherit;
+}
+
+.nav-tabs > li {
+    cursor: pointer;
+}
+
+.dropdown-menu,
+.dropdown-menu > li > a {
+    outline: none;
+}
+
+//:hover, .dropdown-menu > li > a:focus
+
+// Previene los textos grisados (que no se leen) cuando un item está seleccionado/resaltado
+.table tr.success .text-muted,
+.table tr.warning .text-muted,
+.list-group-item.active .text-muted,
+.list-group-item.active .small,
+.list-group-item.active SMALL {
+    color: inherit;
+}
+
+.form-group .radio,
+.form-group .checkbox {
+    margin-top: 0;
+}
+
+.form-group > .input-group {
+    width: 100%;
+}
+
+//
+// Angular-Strap Hacks
+//
+.modal {
+    &.center {
+        .modal-dialog {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            min-width: 320px;
+            max-width: 630px;
+            width: 50%;
+            -moz-transform: translateX(-50%) translateY(-50%);
+            -ms-transform: translateX(-50%) translateY(-50%);
+            -o-transform: translateX(-50%) translateY(-50%);
+            -webkit-transform: translateX(-50%) translateY(-50%);
+            transform: translateX(-50%) translateY(-50%);
+        }
+    }
+}

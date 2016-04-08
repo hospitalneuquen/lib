@@ -1,5 +1,3 @@
-﻿'use strict'
-
 /**
  * @ngdoc directive
  * @module plex
@@ -26,9 +24,10 @@ angular.module('plex').directive('title', ['$tooltip', function ($tooltip) {
                     html: true,
                     container: "body",
                     animation: "am-fade-and-slide-top"
-                }
+                };
                 element.removeAttr("title");
                 var tooltip = $tooltip(element, options);
+                
                 scope.$on('$destroy', function () {
                     tooltip.destroy();
                 });

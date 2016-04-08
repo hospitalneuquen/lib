@@ -1,0 +1,211 @@
+//
+// Variables
+//
+@card-spacer-x: 1.25rem;
+@card-spacer-y: 0.75rem;
+@card-border-width: 1px;
+@card-border-radius: 0;
+@card-border-color: rgba(0,0,0,.125);
+@card-border-radius-inner: 0;
+@card-cap-bg: #f5f5f5;
+@card-bg: #fff;
+@card-link-hover-color: #fff;
+@card-deck-margin: 0.625rem;
+@card-columns-sm-up-column-gap: 1.25rem; //
+// Base styles
+//
+.card {
+    position: relative;
+    display: block;
+    margin-bottom: @card-spacer-y;
+    background-color: @card-bg;
+    // border: @card-border-width solid @card-border-color;
+    // Doesn't use mixin so that cards always have a "border"
+    box-shadow: inset 0 0 0 @card-border-width @card-border-color;
+    // Sombra de Material Design:
+    //box-shadow: 0 1px 3px 0 rgba(0,0,0,.2),0 1px 1px 0 rgba(0,0,0,.14),0 2px 1px -1px rgba(0,0,0,.12)
+}
+.card-block {
+    &::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+    padding: @card-spacer-x;
+}
+.card-title {
+    margin-bottom: @card-spacer-y;
+}
+.card-subtitle {
+    margin-top: -0,375rem;
+    margin-bottom: 0;
+}
+.card-text:last-child {
+    margin-bottom: 0;
+}
+.card-link {
+    text-decoration: none;
+    + .card-link {
+        margin-left: @card-spacer-x;
+    }
+}
+//
+// Optional textual caps
+//
+.card-header {
+    &::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+    padding: @card-spacer-y @card-spacer-x;
+    background-color: @card-cap-bg;
+    // border-bottom: @card-border-width solid @card-border-color;
+    // Doesn't use mixin so that cards always have a "border"
+    box-shadow: inset 0 0 0 @card-border-width @card-border-color;
+}
+.card-footer {
+    &::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+    padding: @card-spacer-y @card-spacer-x;
+    background-color: @card-cap-bg;
+    // border-top: @card-border-width solid @card-border-color;
+    // Doesn't use mixin so that cards always have a "border"
+    box-shadow: inset 0 0 0 @card-border-width @card-border-color;
+}
+//
+// Header navs
+//
+.card-header-tabs {
+    margin-right: -0,625rem;
+    margin-bottom: -0.75rem;
+    margin-left: -0,625rem;
+    border-bottom: 0;
+    .nav-item {
+        margin-bottom: 0;
+    }
+}
+.card-header-pills {
+    margin-right: -0,625rem;
+    margin-left: -0,625rem;
+}
+//
+// Background variations
+//
+.card-primary {
+    background-color: @brand-primary;
+    border-color: @brand-primary;
+}
+.card-success {
+    background-color: @brand-success;
+    border-color: @brand-success;
+}
+.card-info {
+    background-color: @brand-info;
+    border-color: @brand-info;
+}
+.card-warning {
+    background-color: @brand-warning;
+    border-color: @brand-warning;
+}
+.card-danger {
+    background-color: @brand-danger;
+    border-color: @brand-danger;
+}
+// Remove all backgrounds
+.card-outline-primary {
+    background-color: transparent;
+    border-color: @btn-primary-bg;
+}
+// .card-outline-secondary {
+//     background-color: transparent;
+//     border-color: @btn-secondary-border;
+// }
+.card-outline-info {
+    background-color: transparent;
+    border-color: @btn-info-bg;
+}
+.card-outline-success {
+    background-color: transparent;
+    border-color: @btn-success-bg;
+}
+.card-outline-warning {
+    background-color: transparent;
+    border-color: @btn-warning-bg;
+}
+.card-outline-danger {
+    background-color: transparent;
+    border-color: @btn-danger-bg;
+}
+//
+// Inverse text within a card for use with dark backgrounds
+//
+.card-inverse {
+    .card-header,
+    .card-footer {
+        border-bottom: @card-border-width solid rgba(255,255,255,.2);
+    }
+    .card-header,
+    .card-footer,
+    .card-title,
+    .card-blockquote {
+        color: #fff;
+    }
+    .card-link,
+    .card-text,
+    .card-blockquote > footer {
+        color: rgba(255,255,255,.65);
+    }
+    .card-link {
+        //    @include hover-focus {
+        //      color: $card-link-hover-color;
+        //    }
+    }
+}
+//
+// Blockquote
+//
+.card-blockquote {
+    padding: 0;
+    margin-bottom: 0;
+    border-left: 0;
+}
+// Card image
+.card-img {
+    // margin: -1.325rem;
+}
+.card-img-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 1.25rem;
+}
+// Card image caps
+.card-img-top {}
+.card-img-bottom {}
+//
+// Card set
+//
+@space-between-cards: (2 * @card-deck-margin);
+.card-deck {
+    display: table;
+    table-layout: fixed;
+    border-spacing: @space-between-cards 0;
+    .card {
+        display: table-cell;
+        width: 1%;
+        vertical-align: top;
+    }
+}
+.card-deck-wrapper {
+    margin-right: (-@space-between-cards);
+    margin-left: (-@space-between-cards);
+}
+.card-deck-wrapper + .card-deck-wrapper{
+    padding-top: @space-between-cards;
+}
