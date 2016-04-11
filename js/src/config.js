@@ -3,7 +3,6 @@ var requiredModules = [
     // Core
     'ngRoute', 'ngAnimate', 'ngSanitize',
     // UI
-    'ngMaterial',
     'mgcrea.ngStrap.core',
     'mgcrea.ngStrap.affix',
     'mgcrea.ngStrap.alert',

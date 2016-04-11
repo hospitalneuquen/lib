@@ -5,7 +5,7 @@
  * @description
  * To-do
  **/
-angular.module('plex').directive("plexTabs", ['$mdInkRipple', function($mdInkRipple) {
+angular.module('plex').directive("plexTabs", [function() {
     return {
         restrict: "A",
         require: 'ngModel',
@@ -34,14 +34,14 @@ angular.module('plex').directive("plexTabs", ['$mdInkRipple', function($mdInkRip
                     controller.$setViewValue($this.index());
                 });
             });
-            lis.each(function(i) {
-                $mdInkRipple.attach(scope, angular.element(this), {
-                    center: false,
-                    dimBackground: true,
-                    outline: false,
-                    rippleSize: 'full'
-                });
-            });
+            // lis.each(function(i) {
+            //     $mdInkRipple.attach(scope, angular.element(this), {
+            //         center: false,
+            //         dimBackground: true,
+            //         outline: false,
+            //         rippleSize: 'full'
+            //     });
+            // });
 
             // Prepare DIVs
             divs.css('display', 'none');

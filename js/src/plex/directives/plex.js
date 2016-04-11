@@ -39,7 +39,7 @@
       </file>
     </example>
  **/
-angular.module('plex').directive("plex", ['$injector', '$mdInkRipple', function($injector, $mdInkRipple) {
+angular.module('plex').directive("plex", ['$injector', function($injector) {
     return {
         restrict: 'EAC',
         require: ['?ngModel', '^?form'],
@@ -104,12 +104,12 @@ angular.module('plex').directive("plex", ['$injector', '$mdInkRipple', function(
                         var rippleContainer = angular.element("<span>");
                         rippleContainer.append(element);
                         label.prepend(rippleContainer);
-                        // Ripple
-                        $mdInkRipple.attach(scope, rippleContainer, {
-                            center: true,
-                            dimBackground: false,
-                            fitRipple: true
-                        });
+                        // // Ripple
+                        // $mdInkRipple.attach(scope, rippleContainer, {
+                        //     center: true,
+                        //     dimBackground: false,
+                        //     fitRipple: true
+                        // });
                     } else
                         newParent.append(element);
 
