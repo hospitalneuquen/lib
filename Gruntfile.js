@@ -76,6 +76,8 @@ module.exports = function(grunt) {
                     'bower_components/moment/moment.js',
                     'bower_components/moment/locale/es.js',
                     'bower_components/angular-jwt/dist/angular-jwt.js',
+                    'bower_components/angular-aria/angular-aria.js',
+                    'bower_components/angular-material/angular-material.js',
 
                     // Global
                     'js/src/global/modules/Global.js',
@@ -92,8 +94,9 @@ module.exports = function(grunt) {
                     // 'js/src/plex/lib/textangular/textAngularSetup.js',
                     // 'js/src/plex/lib/textangular/textAngular.js',
                     'js/src/plex/modules/plex.js',
-                    'js/src/plex/services/plex.js',
+                    'js/src/plex/services/Plex.js',
                     'js/src/plex/services/PlexResolver.js',
+                    //'js/src/plex/services/PlexRipple.js',
                     'js/src/plex/directives/form.js',
                     'js/src/plex/directives/plexActions.js',
                     'js/src/plex/directives/plexEnter.js',

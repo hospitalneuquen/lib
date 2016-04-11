@@ -39,7 +39,7 @@
       </file>
     </example>
  **/
-angular.module('plex').directive("plex", ['$injector', function($injector) {
+angular.module('plex').directive("plex", ['$injector', '$mdInkRipple', function($injector, $mdInkRipple) {
     return {
         restrict: 'EAC',
         require: ['?ngModel', '^?form'],
@@ -100,10 +100,19 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                     // Actualiza el DOM
                     element.before(newParent);
                     element.detach();
-                    if (type == 'radio' || type == 'checkbox')
-                        label.prepend(element);
-                    else
+                    if (type == 'radio' || type == 'checkbox') {
+                        var rippleContainer = angular.element("<span>");
+                        rippleContainer.append(element);
+                        label.prepend(rippleContainer);
+                        // Ripple
+                        $mdInkRipple.attach(scope, rippleContainer, {
+                            center: true,
+                            dimBackground: false,
+                            fitRipple: true
+                        });
+                    } else
                         newParent.append(element);
+
 
                     // Elementos de validación
                     if (type != 'radio' && type != 'checkbox') {

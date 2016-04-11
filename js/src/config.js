@@ -1,10 +1,9 @@
-﻿'use strict';
 // Módulos para cargar
 var requiredModules = [
     // Core
     'ngRoute', 'ngAnimate', 'ngSanitize',
     // UI
-    //'mgcrea.ngStrap',
+    'ngMaterial',
     'mgcrea.ngStrap.core',
     'mgcrea.ngStrap.affix',
     'mgcrea.ngStrap.alert',
@@ -86,7 +85,7 @@ angular
             else {
                 return data;
             }
-        })
+        });
     }])
     .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {
