@@ -87,3 +87,36 @@
 [class*="icon-"] + small {
     margin-left: 0.7em;
 }
+
+.icon-spinner {
+    animation: iconspin 1s infinite linear;
+    -webkit-animation: iconspin 1s infinite linear;
+    -moz-animation: iconspin 1s infinite linear;
+}
+
+@keyframes iconspin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes iconspin {
+    from {
+        -webkit-transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@-moz-keyframes iconspin {
+    from {
+        -moz-transform: rotate(0deg);
+    }
+    to {
+        -moz-transform: rotate(360deg);
+    }
+}
