@@ -64991,10 +64991,19 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                     // Actualiza el DOM
                     element.before(newParent);
                     element.detach();
-                    if (type == 'radio' || type == 'checkbox')
-                        label.prepend(element);
-                    else
+                    if (type == 'radio' || type == 'checkbox') {
+                        var rippleContainer = angular.element("<span>");
+                        rippleContainer.append(element);
+                        label.prepend(rippleContainer);
+                        // // Ripple
+                        // $mdInkRipple.attach(scope, rippleContainer, {
+                        //     center: true,
+                        //     dimBackground: false,
+                        //     fitRipple: true
+                        // });
+                    } else
                         newParent.append(element);
+
 
                     // Elementos de validación
                     if (type != 'radio' && type != 'checkbox') {
@@ -65924,6 +65933,14 @@ angular.module('plex').directive("plexTabs", [function() {
                     controller.$setViewValue($this.index());
                 });
             });
+            // lis.each(function(i) {
+            //     $mdInkRipple.attach(scope, angular.element(this), {
+            //         center: false,
+            //         dimBackground: true,
+            //         outline: false,
+            //         rippleSize: 'full'
+            //     });
+            // });
 
             // Prepare DIVs
             divs.css('display', 'none');
@@ -65938,13 +65955,11 @@ angular.module('plex').directive("plexTabs", [function() {
     };
 }]);
 
-'use strict';
 // Módulos para cargar
 var requiredModules = [
     // Core
     'ngRoute', 'ngAnimate', 'ngSanitize',
     // UI
-    //'mgcrea.ngStrap',
     'mgcrea.ngStrap.core',
     'mgcrea.ngStrap.affix',
     'mgcrea.ngStrap.alert',
@@ -66026,7 +66041,7 @@ angular
             else {
                 return data;
             }
-        })
+        });
     }])
     .run(['$rootScope', 'Global', 'Plex', 'Session', function ($rootScope, Global, Plex, Session) {
         angular.extend($rootScope, {

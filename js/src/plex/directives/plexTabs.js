@@ -34,6 +34,14 @@ angular.module('plex').directive("plexTabs", [function() {
                     controller.$setViewValue($this.index());
                 });
             });
+            // lis.each(function(i) {
+            //     $mdInkRipple.attach(scope, angular.element(this), {
+            //         center: false,
+            //         dimBackground: true,
+            //         outline: false,
+            //         rippleSize: 'full'
+            //     });
+            // });
 
             // Prepare DIVs
             divs.css('display', 'none');
