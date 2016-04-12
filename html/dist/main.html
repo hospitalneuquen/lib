@@ -1,9 +1,9 @@
 <!-- Big loader -->
 <div class="app-loading" ng-hide="!Plex.loading.showBig">
     <div>
-        <div class="progress progress-striped active">
-            <div class="progress-bar" style="width: 100%"></div>
-        </div>
+        <svg class="circular">
+            <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"/>
+        </svg>
     </div>
 </div>
 <!-- <div class="alert alert-danger app-error" ng-hide="!Plex.error.show" ng-click="Plex.error.show = false">
@@ -51,7 +51,10 @@
                 </a>
             </li>
         </ul> -->
-        <span class="navbar-brand" href="#"><i class="mdi mdi-arrow-left hover" ng-click="Plex.closeView()" xng-if="Plex.currentViewIndex > 0"></i><span>{{Plex.title}}</span></span>
+        <span class="navbar-brand" href="#">
+            <i class="mdi mdi-arrow-left hover" ng-click="Plex.closeView()" xng-if="Plex.currentViewIndex > 0"></i>
+            <span>{{Plex.title}}</span>
+        </span>
         <!-- Toolbar loader -->
         <div class="loader" ng-show="Plex.loading.showSmall">
             <div class="circle">&nbsp;</div>

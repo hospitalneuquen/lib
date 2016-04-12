@@ -206,9 +206,7 @@ body {
     text-align: center;
     vertical-align: middle;
 }
-.app-loading .progress {
-    height: 2em;
-}
+
 .app-loading.ng-hide-add,
 .app-loading.ng-hide-remove {
     -webkit-transition: 0.5s linear all;
@@ -219,4 +217,54 @@ body {
 }
 .app-loading.ng-hide {
     opacity: 0;
+}
+
+.app-loading .circular {
+    animation: loadingrotate 2s linear infinite;
+    height: 100px;
+    position: relative;
+    width: 100px;
+}
+
+.app-loading .path {
+    stroke-dasharray: 1,200;
+    stroke-dashoffset: 0;
+    animation: loadingdash 1.5s ease-in-out infinite, loadingcolor 6s ease-in-out infinite;
+    stroke-linecap: round;
+}
+
+@keyframes loadingrotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+@keyframes loadingdash {
+    0% {
+        stroke-dasharray: 1,200;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 89,200;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 89,200;
+        stroke-dashoffset: -124;
+    }
+}
+@keyframes loadingcolor {
+    100%,
+    0% {
+        stroke: #d62d20;
+    }
+    40% {
+        stroke: #0057e7;
+    }
+    66% {
+        stroke: #008744;
+    }
+    80%,
+    90% {
+        stroke: #ffa700;
+    }
 }
