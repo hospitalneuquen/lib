@@ -213,6 +213,12 @@ module.exports = function(grunt) {
             //     dest: 'js/dist/plex-canvas',
             //     expand: true
             // }
+            hightcharts: {
+                cwd: 'bower_components/highcharts/',
+                src: 'highcharts.js',
+                dest: 'js/dist',
+                expand: true
+            },
         }
     });
 };

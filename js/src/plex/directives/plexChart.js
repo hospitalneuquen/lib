@@ -8,7 +8,7 @@ angular.module('plex').directive('plexChart', ['Global', function (Global) {
             updateWhen: '='
         },
         link: function (scope, element, attrs) {
-            Global.loadScript('/lib-md/js/dist/highcharts.js').then(function(){
+            Global.loadScript('/lib/js/dist/highcharts.js').then(function(){
                 var chart;
                 var seriesId = 0;
                 var ensureIds = function (series) {
