@@ -65517,6 +65517,9 @@ angular.module('plex').directive("plexSubmit", ["$parse", "$timeout", function($
         scope: false,
         link: function(scope, element, attrs, formController) {
             var fn = $parse(attrs.plexSubmit);
+            var icon = element.children("I").eq(0);
+            var originalClass = icon[0].className;
+            
             element.on('click', function(event) {
                 scope.$apply(function() {
                     scope.$broadcast('$plex-before-submit', formController);
@@ -65528,8 +65531,6 @@ angular.module('plex').directive("plexSubmit", ["$parse", "$timeout", function($
                             // Disable button
                             element.attr('disabled', 'disabled');
                             // DOM changes
-                            var icon = element.children("I").eq(0);
-                            var originalClass = icon[0].className;
                             icon.removeClass();
                             icon.addClass('mdi mdi-google-circles-extended icon-spinner');
                             // When done ...
