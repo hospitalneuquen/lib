@@ -46,7 +46,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
         priority: 598, // Para que el postLink ejecute último. ng-if tiene prioridad 600
         compile: function(element, attrs) {
             // Determina el tipo
-            var type = element.is("SELECT") ? "select" : (attrs.plex || attrs.type);
+            var type = element.is("SELECT") ? "select" : (attrs.plex || (attrs.type == 'password' ? 'text' : attrs.type));
 
             // Inyecta dinámicamente directivas
             var dinamicLink = null;
@@ -167,7 +167,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                             }
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='mdi mdi-calendar'></i></a></span>").on('click', function() {
+                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-calendar'></i></a></span>").on('click', function() {
                                 // element.removeAttr('readonly');
                                 element.focus();
                                 // element.attr('readonly', 'readonly');
@@ -188,7 +188,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                             element.detach();
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='mdi mdi-clock'></i></a></span>").on('click', function() {
+                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-clock'></i></a></span>").on('click', function() {
                                 element.focus();
                             }));
 

@@ -39,12 +39,12 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                             break;
                         case 400:
                             if (response && response.message)
-                                Plex.showWarning(response.message);
+                                Plex.alert(response.message, "warning", 0);
                             else
-                                Plex.showError();
+                                Plex.alert("No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...", "danger", 0);
                             break;
                         default:
-                            Plex.showError();
+                            Plex.alert("No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...", "danger", 0);
                     }
                 }
                 return response;
