@@ -6,7 +6,7 @@ angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Sess
         error: false,
         login: function() {
             var self = this;
-            Session.api.login({
+            return Session.api.login({
                 username: self.username,
                 password: self.password,
             }).then(function(data) {

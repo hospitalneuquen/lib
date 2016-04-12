@@ -5,7 +5,6 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
         scope: true,
         link: function(scope, element, attrs) {
             var dropDown;
-            var tooltip;
 
             // Crea un ícono si no lo tiene con el dropdown
             var icon = element.is("I") ? element : angular.element('<i>').appendTo(element);
@@ -19,10 +18,12 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
 
             // Watches
             scope.$watch(attrs.plexActions, function(actions) {
-                if (dropDown)
-                    dropDown.destroy();
-                if (tooltip)
-                    tooltip.destroy();
+                if (dropDown) {
+                    try {
+                        dropDown.destroy();
+                    } catch (e) {}
+                    dropDown = false;
+                }
 
                 if (actions) {
                     // Convierte las acciones al formato elegido
@@ -48,10 +49,13 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
             });
 
             scope.$on('$destroy', function() {
-                if (dropDown)
-                    dropDown.destroy();
-                if (tooltip)
-                    tooltip.destroy();
+                if (dropDown) {
+                    try {
+                        dropDown.hide();
+                        dropDown.destroy();
+                    } catch (e) {}
+                    dropDown = false;
+                }
             });
         }
     };

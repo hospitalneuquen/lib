@@ -63712,12 +63712,12 @@ angular.module('global').factory('Server', ["Plex", "$http", "$window", "Global"
                             break;
                         case 400:
                             if (response && response.message)
-                                Plex.showWarning(response.message);
+                                Plex.alert(response.message, "warning", 0);
                             else
-                                Plex.showError();
+                                Plex.alert("No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...", "danger", 0);
                             break;
                         default:
-                            Plex.showError();
+                            Plex.alert("No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...", "danger", 0);
                     }
                 }
                 return response;
@@ -63757,7 +63757,7 @@ angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Sess
         error: false,
         login: function() {
             var self = this;
-            Session.api.login({
+            return Session.api.login({
                 username: self.username,
                 password: self.password,
             }).then(function(data) {
@@ -63801,9 +63801,6 @@ angular.module('global').controller('/Lib/Controllers/Session', ['$scope', 'Sess
  **/
 angular.module('plex', []);
 
-
-'use strict';
-
 /**
  *
  * @ngdoc service
@@ -63813,7 +63810,7 @@ angular.module('plex', []);
  * Permite interactuar con la UI
  *
  **/
-angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "Session", "$alert", "$window", function($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, Session, $alert, $window) {
+angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window", "$modal", "$q", "$timeout", "Global", "Session", "$alert", function($rootScope, PlexResolver, $window, $modal, $q, $timeout, Global, Session, $alert) {
     var self = {
         /*
         ViewStack es un array de objetos son las siguientes propiedades:
@@ -63827,22 +63824,6 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
         title: null,
         subtitle: null,
         currentSkin: null,
-        error: {
-            show: false,
-            title: undefined
-        },
-        warning: {
-            show: false,
-            title: undefined
-        },
-        info: {
-            show: false,
-            title: undefined
-        },
-        success: {
-            show: false,
-            title: undefined
-        },
         loading: {
             smallCount: 0,
             bigCount: 0,
@@ -63868,49 +63849,22 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
         actions: [], // Acciones que se muestran en el footer. Es un array de {title, icon, [url | handler], visible, disabled}
         menuActions: null, // Acciones que se muestran en menú a la izquierda del nav-bar
         userActions: [{
-                text: "<i class=\"fa fa-sign-out\"></i><span>Cerrar sesión</span>",
-                click: function() {
-                    Session.logout();
-                }
+            icon: 'mdi mdi-logout',
+            text: 'Cerrar sessión',
+            handler: function() {
+                Session.logout();
             }
-            // {
-            //     divider: true
-            // },
-            // {
-            //     text: "<i class=\"fa fa-circle plex-skin-icon-cosmo\"></i><span>Cosmo</span>",
-            //     click: function () {
-            //         self.currentSkin = "/lib/1.1/lib.cosmo.css";
-            //     }
-            // },
-            // {
-            //     text: "<i class=\"fa fa-circle plex-skin-icon-flatly\"></i><span>Flatly</span>",
-            //     click: function () {
-            //         self.currentSkin = "/lib/1.1/lib.flatly.css";
-            //     }
-            // },
-            // {
-            //     text: "<i class=\"fa fa-circle plex-skin-icon-amelia\"></i><span>Amelia</span>",
-            //     click: function () {
-            //         self.currentSkin = "/lib/1.1/lib.amelia.css";
-            //     }
-            // },
-            // {
-            //     text: "<i class=\"fa fa-circle plex-skin-icon-slate\"></i><span>Slate</span>",
-            //     click: function () {
-            //         self.currentSkin = "/lib/1.1/lib.slate.css";
-            //     }
-            // },
-            // {
-            //     text: "<i class=\"fa fa-circle plex-skin-icon-superhero\"></i><span>Superhero</span>",
-            //     click: function () {
-            //         self.currentSkin = "/lib/1.1/lib.superhero.css";
-            //     }
-            // }
-        ],
+        }, {
+            icon: 'mdi mdi-account-switch',
+            text: 'Cambiar usuario',
+            handler: function() {
+                Session.logout();
+            }
+        }],
         submitForm: function() {
             var form = self.currentView().form;
             if (!form.isSubmitting) {
-                $rootScope.$broadcast('$plex-before-submit', form.controller)
+                $rootScope.$broadcast('$plex-before-submit', form.controller);
                 if (form.controller.$valid) {
                     form.isSubmitting = true;
 
@@ -63939,7 +63893,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                         form.controller.$setPristine(true);
                     }
                 } else {
-                    self.showWarning('Por favor verifique los datos ingresados');
+                    self.alert("Por favor verifique los datos ingresados", "warning");
                 }
                 $rootScope.$broadcast('$plex-after-submit', form.controller);
             }
@@ -63967,68 +63921,6 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 }
             } else
                 return true;
-        },
-        /**
-         *
-         * @ngdoc method
-         * @name Plex#showError
-         * @param {String} message Mensaje a mostrar
-         * @description Muestra un mensaje de error.
-         *
-         * Ejemplo:
-         *
-         *      Plex.showError("El dato ingresado es incorrecto")
-         **/
-        showError: function(message) {
-            if (!message)
-                message = "No se pudo comunicar con la base de datos. Por favor intente la operación nuevamente...";
-            self.error.title = message;
-            self.error.show = true;
-        },
-        /**
-         *
-         * @ngdoc method
-         * @name Plex#showWarning
-         * @param {String} message Mensaje a mostrar
-         * @description Muestra una advertencia.
-         *
-         * Ejemplo:
-         *
-         *      Plex.showWarning("El dato ingresado es incorrecto")
-         **/
-        showWarning: function(message) {
-            self.warning.title = message;
-            self.warning.show = true;
-        },
-        /**
-         *
-         * @ngdoc method
-         * @name Plex#showInfo
-         * @param {String} message Mensaje a mostrar
-         * @description Muestra un mensaje de información.
-         *
-         * Ejemplo:
-         *
-         *      Plex.showInfo("El dato ingresado es incorrecto")
-         **/
-        showInfo: function(message) {
-            self.info.title = message;
-            self.info.show = true;
-        },
-        /**
-         *
-         * @ngdoc method
-         * @name Plex#showSuccess
-         * @param {String} message Mensaje a mostrar
-         * @description Muestra un mensaje de operacion exitosa.
-         *
-         * Ejemplo:
-         *
-         *      Plex.showSuccess("Datos del paciente guardados")
-         **/
-        showSuccess: function(message) {
-            self.success.title = message;
-            self.success.show = true;
         },
         /**
          *
@@ -64112,7 +64004,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                 // Muestra la vista (usa $timeout para no romper el ciclo de rendering)
                 $timeout(function() {
                     $rootScope.$broadcast('$plex-openView', {
-                        route: PlexResolver.resolve(path.indexOf('/') != 0 ? '/' + path : path),
+                        route: PlexResolver.resolve(path.indexOf('/') !== 0 ? '/' + path : path),
                         deferred: deferred
                     });
                 });
@@ -64203,7 +64095,7 @@ angular.module('plex').factory('Plex', ["$rootScope", "PlexResolver", "$window",
                         else
                         if (this.url)
                             self.openView(this.url);
-                    }
+                    };
                 }
             }
 
@@ -64505,7 +64397,6 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
         scope: true,
         link: function(scope, element, attrs) {
             var dropDown;
-            var tooltip;
 
             // Crea un ícono si no lo tiene con el dropdown
             var icon = element.is("I") ? element : angular.element('<i>').appendTo(element);
@@ -64519,10 +64410,12 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
 
             // Watches
             scope.$watch(attrs.plexActions, function(actions) {
-                if (dropDown)
-                    dropDown.destroy();
-                if (tooltip)
-                    tooltip.destroy();
+                if (dropDown) {
+                    try {
+                        dropDown.destroy();
+                    } catch (e) {}
+                    dropDown = false;
+                }
 
                 if (actions) {
                     // Convierte las acciones al formato elegido
@@ -64548,10 +64441,13 @@ angular.module('plex').directive('plexActions', ['$dropdown', '$tooltip', functi
             });
 
             scope.$on('$destroy', function() {
-                if (dropDown)
-                    dropDown.destroy();
-                if (tooltip)
-                    tooltip.destroy();
+                if (dropDown) {
+                    try {
+                        dropDown.hide();
+                        dropDown.destroy();
+                    } catch (e) {}
+                    dropDown = false;
+                }
             });
         }
     };
@@ -64937,7 +64833,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
         priority: 598, // Para que el postLink ejecute último. ng-if tiene prioridad 600
         compile: function(element, attrs) {
             // Determina el tipo
-            var type = element.is("SELECT") ? "select" : (attrs.plex || attrs.type);
+            var type = element.is("SELECT") ? "select" : (attrs.plex || (attrs.type == 'password' ? 'text' : attrs.type));
 
             // Inyecta dinámicamente directivas
             var dinamicLink = null;
@@ -65058,7 +64954,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                             }
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='mdi mdi-calendar'></i></a></span>").on('click', function() {
+                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-calendar'></i></a></span>").on('click', function() {
                                 // element.removeAttr('readonly');
                                 element.focus();
                                 // element.attr('readonly', 'readonly');
@@ -65079,7 +64975,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                             element.detach();
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default' tabindex='-1'><i class='mdi mdi-clock'></i></a></span>").on('click', function() {
+                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-clock'></i></a></span>").on('click', function() {
                                 element.focus();
                             }));
 
@@ -65355,7 +65251,6 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                     });
                                 },
                                 destroy: function() {
-                                    debugger;
                                 },
                                 query: function(params, callback) {
                                     if (minimumLength > 0 && (!params || !params.term || params.term.length < minimumLength)) {
@@ -65492,7 +65387,10 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                 // Events
                 element.off('change'); // Remove default angular.js handler
                 element.on("$destroy", function() {
-                    element.select2("destroy");
+                    try {
+                        if (element.data('select2'))
+                            element.select2("destroy");
+                    } catch (e) {}
                 });
                 scope.$watch(attrs.ngModel, function() {
                     element.trigger('change');
@@ -65518,8 +65416,9 @@ angular.module('plex').directive("plexSubmit", ["$parse", "$timeout", function($
         link: function(scope, element, attrs, formController) {
             var fn = $parse(attrs.plexSubmit);
             var icon = element.children("I").eq(0);
-            var originalClass = icon[0].className;
-            
+            var hasIcon = icon.length > 0;
+            var originalClass = hasIcon && icon[0].className;
+
             element.on('click', function(event) {
                 scope.$apply(function() {
                     scope.$broadcast('$plex-before-submit', formController);
@@ -65531,20 +65430,24 @@ angular.module('plex').directive("plexSubmit", ["$parse", "$timeout", function($
                             // Disable button
                             element.attr('disabled', 'disabled');
                             // DOM changes
-                            icon.removeClass();
-                            icon.addClass('mdi mdi-google-circles-extended icon-spinner');
+                            if (hasIcon) {
+                                icon.removeClass();
+                                icon.addClass('mdi mdi-google-circles-extended icon-spinner');
+                            }
                             // When done ...
                             promise.finally(function() {
                                 // Restore button state
                                 element.removeAttr('disabled');
                                 // Show check icon
-                                icon.removeClass();
-                                icon.addClass('mdi mdi-check');
-                                // Restore original icon
-                                $timeout(function(){
+                                if (hasIcon) {
                                     icon.removeClass();
-                                    icon.addClass(originalClass);
-                                }, 2000);
+                                    icon.addClass('mdi mdi-check');
+                                    // Restore original icon
+                                    $timeout(function() {
+                                        icon.removeClass();
+                                        icon.addClass(originalClass);
+                                    }, 2000);
+                                }
                             });
                         }
                     }

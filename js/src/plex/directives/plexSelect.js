@@ -147,7 +147,6 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                     });
                                 },
                                 destroy: function() {
-                                    debugger;
                                 },
                                 query: function(params, callback) {
                                     if (minimumLength > 0 && (!params || !params.term || params.term.length < minimumLength)) {
@@ -284,7 +283,10 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                 // Events
                 element.off('change'); // Remove default angular.js handler
                 element.on("$destroy", function() {
-                    element.select2("destroy");
+                    try {
+                        if (element.data('select2'))
+                            element.select2("destroy");
+                    } catch (e) {}
                 });
                 scope.$watch(attrs.ngModel, function() {
                     element.trigger('change');

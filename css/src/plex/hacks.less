@@ -2,6 +2,10 @@
 // Bootstrap hacks
 //
 
+.btn {
+    outline: none !important;
+}
+
 textarea {
     resize: none;
 }
@@ -20,6 +24,10 @@ label.block:first-child {
 
 .nav-tabs > li {
     cursor: pointer;
+}
+
+.dropdown-menu{
+    z-index: 2000;
 }
 
 .dropdown-menu,
@@ -68,7 +76,19 @@ label.block:first-child {
     }
 }
 
-// MDI hacks
+// Icons
+// Permite espaciar los iconos y textos automáticamente
+[class^="mdi-"] + span,
+[class*="mdi-"] + span,
+[class^="mdi-"] + small,
+[class*="mdi-"] + small,
+[class^="icon-"] + span,
+[class*="icon-"] + span,
+[class^="icon-"] + small,
+[class*="icon-"] + small {
+    margin-left: 0.4em;
+}
+
 .mdi {
     font-size: 1.5em;
     vertical-align: text-top;

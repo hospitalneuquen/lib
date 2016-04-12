@@ -14,8 +14,9 @@ angular.module('plex').directive("plexSubmit", ["$parse", "$timeout", function($
         link: function(scope, element, attrs, formController) {
             var fn = $parse(attrs.plexSubmit);
             var icon = element.children("I").eq(0);
-            var originalClass = icon[0].className;
-            
+            var hasIcon = icon.length > 0;
+            var originalClass = hasIcon && icon[0].className;
+
             element.on('click', function(event) {
                 scope.$apply(function() {
                     scope.$broadcast('$plex-before-submit', formController);
@@ -27,20 +28,24 @@ angular.module('plex').directive("plexSubmit", ["$parse", "$timeout", function($
                             // Disable button
                             element.attr('disabled', 'disabled');
                             // DOM changes
-                            icon.removeClass();
-                            icon.addClass('mdi mdi-google-circles-extended icon-spinner');
+                            if (hasIcon) {
+                                icon.removeClass();
+                                icon.addClass('mdi mdi-google-circles-extended icon-spinner');
+                            }
                             // When done ...
                             promise.finally(function() {
                                 // Restore button state
                                 element.removeAttr('disabled');
                                 // Show check icon
-                                icon.removeClass();
-                                icon.addClass('mdi mdi-check');
-                                // Restore original icon
-                                $timeout(function(){
+                                if (hasIcon) {
                                     icon.removeClass();
-                                    icon.addClass(originalClass);
-                                }, 2000);
+                                    icon.addClass('mdi mdi-check');
+                                    // Restore original icon
+                                    $timeout(function() {
+                                        icon.removeClass();
+                                        icon.addClass(originalClass);
+                                    }, 2000);
+                                }
                             });
                         }
                     }
