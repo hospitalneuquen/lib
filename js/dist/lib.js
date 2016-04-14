@@ -61030,578 +61030,6 @@ angular.module('mgcrea.ngStrap.helpers.dimensions', []).factory('dimensions', fu
  */
 'use strict';
 
-angular.module('mgcrea.ngStrap.datepicker', [ 'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.helpers.dateFormatter', 'mgcrea.ngStrap.tooltip' ]).provider('$datepicker', function() {
-  var defaults = this.defaults = {
-    animation: 'am-fade',
-    prefixClass: 'datepicker',
-    placement: 'bottom-left',
-    templateUrl: 'datepicker/datepicker.tpl.html',
-    trigger: 'focus',
-    container: false,
-    keyboard: true,
-    html: false,
-    delay: 0,
-    useNative: false,
-    dateType: 'date',
-    dateFormat: 'shortDate',
-    timezone: null,
-    modelDateFormat: null,
-    dayFormat: 'dd',
-    monthFormat: 'MMM',
-    yearFormat: 'yyyy',
-    monthTitleFormat: 'MMMM yyyy',
-    yearTitleFormat: 'yyyy',
-    strictFormat: false,
-    autoclose: false,
-    minDate: -Infinity,
-    maxDate: +Infinity,
-    startView: 0,
-    minView: 0,
-    startWeek: 0,
-    daysOfWeekDisabled: '',
-    iconLeft: 'glyphicon glyphicon-chevron-left',
-    iconRight: 'glyphicon glyphicon-chevron-right'
-  };
-  this.$get = [ '$window', '$document', '$rootScope', '$sce', '$dateFormatter', 'datepickerViews', '$tooltip', '$timeout', function($window, $document, $rootScope, $sce, $dateFormatter, datepickerViews, $tooltip, $timeout) {
-    var isNative = /(ip[ao]d|iphone|android)/gi.test($window.navigator.userAgent);
-    var isTouch = 'createTouch' in $window.document && isNative;
-    if (!defaults.lang) defaults.lang = $dateFormatter.getDefaultLocale();
-    function DatepickerFactory(element, controller, config) {
-      var $datepicker = $tooltip(element, angular.extend({}, defaults, config));
-      var parentScope = config.scope;
-      var options = $datepicker.$options;
-      var scope = $datepicker.$scope;
-      if (options.startView) options.startView -= options.minView;
-      var pickerViews = datepickerViews($datepicker);
-      $datepicker.$views = pickerViews.views;
-      var viewDate = pickerViews.viewDate;
-      scope.$mode = options.startView;
-      scope.$iconLeft = options.iconLeft;
-      scope.$iconRight = options.iconRight;
-      var $picker = $datepicker.$views[scope.$mode];
-      scope.$select = function(date) {
-        $datepicker.select(date);
-      };
-      scope.$selectPane = function(value) {
-        $datepicker.$selectPane(value);
-      };
-      scope.$toggleMode = function() {
-        $datepicker.setMode((scope.$mode + 1) % $datepicker.$views.length);
-      };
-      $datepicker.update = function(date) {
-        if (angular.isDate(date) && !isNaN(date.getTime())) {
-          $datepicker.$date = date;
-          $picker.update.call($picker, date);
-        }
-        $datepicker.$build(true);
-      };
-      $datepicker.updateDisabledDates = function(dateRanges) {
-        options.disabledDateRanges = dateRanges;
-        for (var i = 0, l = scope.rows.length; i < l; i++) {
-          angular.forEach(scope.rows[i], $datepicker.$setDisabledEl);
-        }
-      };
-      $datepicker.select = function(date, keep) {
-        if (!angular.isDate(controller.$dateValue)) controller.$dateValue = new Date(date);
-        if (!scope.$mode || keep) {
-          controller.$setViewValue(angular.copy(date));
-          controller.$render();
-          if (options.autoclose && !keep) {
-            $timeout(function() {
-              $datepicker.hide(true);
-            });
-          }
-        } else {
-          angular.extend(viewDate, {
-            year: date.getFullYear(),
-            month: date.getMonth(),
-            date: date.getDate()
-          });
-          $datepicker.setMode(scope.$mode - 1);
-          $datepicker.$build();
-        }
-      };
-      $datepicker.setMode = function(mode) {
-        scope.$mode = mode;
-        $picker = $datepicker.$views[scope.$mode];
-        $datepicker.$build();
-      };
-      $datepicker.$build = function(pristine) {
-        if (pristine === true && $picker.built) return;
-        if (pristine === false && !$picker.built) return;
-        $picker.build.call($picker);
-      };
-      $datepicker.$updateSelected = function() {
-        for (var i = 0, l = scope.rows.length; i < l; i++) {
-          angular.forEach(scope.rows[i], updateSelected);
-        }
-      };
-      $datepicker.$isSelected = function(date) {
-        return $picker.isSelected(date);
-      };
-      $datepicker.$setDisabledEl = function(el) {
-        el.disabled = $picker.isDisabled(el.date);
-      };
-      $datepicker.$selectPane = function(value) {
-        var steps = $picker.steps;
-        var targetDate = new Date(Date.UTC(viewDate.year + (steps.year || 0) * value, viewDate.month + (steps.month || 0) * value, 1));
-        angular.extend(viewDate, {
-          year: targetDate.getUTCFullYear(),
-          month: targetDate.getUTCMonth(),
-          date: targetDate.getUTCDate()
-        });
-        $datepicker.$build();
-      };
-      $datepicker.$onMouseDown = function(evt) {
-        evt.preventDefault();
-        evt.stopPropagation();
-        if (isTouch) {
-          var targetEl = angular.element(evt.target);
-          if (targetEl[0].nodeName.toLowerCase() !== 'button') {
-            targetEl = targetEl.parent();
-          }
-          targetEl.triggerHandler('click');
-        }
-      };
-      $datepicker.$onKeyDown = function(evt) {
-        if (!/(38|37|39|40|13)/.test(evt.keyCode) || evt.shiftKey || evt.altKey) return;
-        evt.preventDefault();
-        evt.stopPropagation();
-        if (evt.keyCode === 13) {
-          if (!scope.$mode) {
-            $datepicker.hide(true);
-          } else {
-            scope.$apply(function() {
-              $datepicker.setMode(scope.$mode - 1);
-            });
-          }
-          return;
-        }
-        $picker.onKeyDown(evt);
-        parentScope.$digest();
-      };
-      function updateSelected(el) {
-        el.selected = $datepicker.$isSelected(el.date);
-      }
-      function focusElement() {
-        element[0].focus();
-      }
-      var _init = $datepicker.init;
-      $datepicker.init = function() {
-        if (isNative && options.useNative) {
-          element.prop('type', 'date');
-          element.css('-webkit-appearance', 'textfield');
-          return;
-        } else if (isTouch) {
-          element.prop('type', 'text');
-          element.attr('readonly', 'true');
-          element.on('click', focusElement);
-        }
-        _init();
-      };
-      var _destroy = $datepicker.destroy;
-      $datepicker.destroy = function() {
-        if (isNative && options.useNative) {
-          element.off('click', focusElement);
-        }
-        _destroy();
-      };
-      var _show = $datepicker.show;
-      $datepicker.show = function() {
-        if (!isTouch && element.attr('readonly') || element.attr('disabled')) return;
-        _show();
-        $timeout(function() {
-          if (!$datepicker.$isShown) return;
-          $datepicker.$element.on(isTouch ? 'touchstart' : 'mousedown', $datepicker.$onMouseDown);
-          if (options.keyboard) {
-            element.on('keydown', $datepicker.$onKeyDown);
-          }
-        }, 0, false);
-      };
-      var _hide = $datepicker.hide;
-      $datepicker.hide = function(blur) {
-        if (!$datepicker.$isShown) return;
-        $datepicker.$element.off(isTouch ? 'touchstart' : 'mousedown', $datepicker.$onMouseDown);
-        if (options.keyboard) {
-          element.off('keydown', $datepicker.$onKeyDown);
-        }
-        _hide(blur);
-      };
-      return $datepicker;
-    }
-    DatepickerFactory.defaults = defaults;
-    return DatepickerFactory;
-  } ];
-}).directive('bsDatepicker', [ '$window', '$parse', '$q', '$dateFormatter', '$dateParser', '$datepicker', function($window, $parse, $q, $dateFormatter, $dateParser, $datepicker) {
-  var isNative = /(ip[ao]d|iphone|android)/gi.test($window.navigator.userAgent);
-  return {
-    restrict: 'EAC',
-    require: 'ngModel',
-    link: function postLink(scope, element, attr, controller) {
-      var options = {
-        scope: scope
-      };
-      angular.forEach([ 'template', 'templateUrl', 'controller', 'controllerAs', 'placement', 'container', 'delay', 'trigger', 'html', 'animation', 'autoclose', 'dateType', 'dateFormat', 'timezone', 'modelDateFormat', 'dayFormat', 'strictFormat', 'startWeek', 'startDate', 'useNative', 'lang', 'startView', 'minView', 'iconLeft', 'iconRight', 'daysOfWeekDisabled', 'id', 'prefixClass', 'prefixEvent' ], function(key) {
-        if (angular.isDefined(attr[key])) options[key] = attr[key];
-      });
-      var falseValueRegExp = /^(false|0|)$/i;
-      angular.forEach([ 'html', 'container', 'autoclose', 'useNative' ], function(key) {
-        if (angular.isDefined(attr[key]) && falseValueRegExp.test(attr[key])) {
-          options[key] = false;
-        }
-      });
-      var datepicker = $datepicker(element, controller, options);
-      options = datepicker.$options;
-      if (isNative && options.useNative) options.dateFormat = 'yyyy-MM-dd';
-      var lang = options.lang;
-      var formatDate = function(date, format) {
-        return $dateFormatter.formatDate(date, format, lang);
-      };
-      var dateParser = $dateParser({
-        format: options.dateFormat,
-        lang: lang,
-        strict: options.strictFormat
-      });
-      if (attr.bsShow) {
-        scope.$watch(attr.bsShow, function(newValue, oldValue) {
-          if (!datepicker || !angular.isDefined(newValue)) return;
-          if (angular.isString(newValue)) newValue = !!newValue.match(/true|,?(datepicker),?/i);
-          if (newValue === true) {
-            datepicker.show();
-          } else {
-            datepicker.hide();
-          }
-        });
-      }
-      angular.forEach([ 'minDate', 'maxDate' ], function(key) {
-        if (angular.isDefined(attr[key])) {
-          attr.$observe(key, function(newValue) {
-            datepicker.$options[key] = dateParser.getDateForAttribute(key, newValue);
-            if (!isNaN(datepicker.$options[key])) datepicker.$build(false);
-            validateAgainstMinMaxDate(controller.$dateValue);
-          });
-        }
-      });
-      if (angular.isDefined(attr.dateFormat)) {
-        attr.$observe('dateFormat', function(newValue) {
-          datepicker.$options.dateFormat = newValue;
-        });
-      }
-      scope.$watch(attr.ngModel, function(newValue, oldValue) {
-        datepicker.update(controller.$dateValue);
-      }, true);
-      function normalizeDateRanges(ranges) {
-        if (!ranges || !ranges.length) return null;
-        return ranges;
-      }
-      if (angular.isDefined(attr.disabledDates)) {
-        scope.$watch(attr.disabledDates, function(disabledRanges, previousValue) {
-          disabledRanges = normalizeDateRanges(disabledRanges);
-          previousValue = normalizeDateRanges(previousValue);
-          if (disabledRanges) {
-            datepicker.updateDisabledDates(disabledRanges);
-          }
-        });
-      }
-      function validateAgainstMinMaxDate(parsedDate) {
-        if (!angular.isDate(parsedDate)) return;
-        var isMinValid = isNaN(datepicker.$options.minDate) || parsedDate.getTime() >= datepicker.$options.minDate;
-        var isMaxValid = isNaN(datepicker.$options.maxDate) || parsedDate.getTime() <= datepicker.$options.maxDate;
-        var isValid = isMinValid && isMaxValid;
-        controller.$setValidity('date', isValid);
-        controller.$setValidity('min', isMinValid);
-        controller.$setValidity('max', isMaxValid);
-        if (isValid) controller.$dateValue = parsedDate;
-      }
-      controller.$parsers.unshift(function(viewValue) {
-        var date;
-        if (!viewValue) {
-          controller.$setValidity('date', true);
-          return null;
-        }
-        var parsedDate = dateParser.parse(viewValue, controller.$dateValue);
-        if (!parsedDate || isNaN(parsedDate.getTime())) {
-          controller.$setValidity('date', false);
-          return;
-        }
-        validateAgainstMinMaxDate(parsedDate);
-        if (options.dateType === 'string') {
-          date = dateParser.timezoneOffsetAdjust(parsedDate, options.timezone, true);
-          return formatDate(date, options.modelDateFormat || options.dateFormat);
-        }
-        date = dateParser.timezoneOffsetAdjust(controller.$dateValue, options.timezone, true);
-        if (options.dateType === 'number') {
-          return date.getTime();
-        } else if (options.dateType === 'unix') {
-          return date.getTime() / 1e3;
-        } else if (options.dateType === 'iso') {
-          return date.toISOString();
-        }
-        return new Date(date);
-      });
-      controller.$formatters.push(function(modelValue) {
-        var date;
-        if (angular.isUndefined(modelValue) || modelValue === null) {
-          date = NaN;
-        } else if (angular.isDate(modelValue)) {
-          date = modelValue;
-        } else if (options.dateType === 'string') {
-          date = dateParser.parse(modelValue, null, options.modelDateFormat);
-        } else if (options.dateType === 'unix') {
-          date = new Date(modelValue * 1e3);
-        } else {
-          date = new Date(modelValue);
-        }
-        controller.$dateValue = dateParser.timezoneOffsetAdjust(date, options.timezone);
-        return getDateFormattedString();
-      });
-      controller.$render = function() {
-        element.val(getDateFormattedString());
-      };
-      function getDateFormattedString() {
-        return !controller.$dateValue || isNaN(controller.$dateValue.getTime()) ? '' : formatDate(controller.$dateValue, options.dateFormat);
-      }
-      scope.$on('$destroy', function() {
-        if (datepicker) datepicker.destroy();
-        options = null;
-        datepicker = null;
-      });
-    }
-  };
-} ]).provider('datepickerViews', function() {
-  function split(arr, size) {
-    var arrays = [];
-    while (arr.length > 0) {
-      arrays.push(arr.splice(0, size));
-    }
-    return arrays;
-  }
-  function mod(n, m) {
-    return (n % m + m) % m;
-  }
-  this.$get = [ '$dateFormatter', '$dateParser', '$sce', function($dateFormatter, $dateParser, $sce) {
-    return function(picker) {
-      var scope = picker.$scope;
-      var options = picker.$options;
-      var lang = options.lang;
-      var formatDate = function(date, format) {
-        return $dateFormatter.formatDate(date, format, lang);
-      };
-      var dateParser = $dateParser({
-        format: options.dateFormat,
-        lang: lang,
-        strict: options.strictFormat
-      });
-      var weekDaysMin = $dateFormatter.weekdaysShort(lang);
-      var weekDaysLabels = weekDaysMin.slice(options.startWeek).concat(weekDaysMin.slice(0, options.startWeek));
-      var weekDaysLabelsHtml = $sce.trustAsHtml('<th class="dow text-center">' + weekDaysLabels.join('</th><th class="dow text-center">') + '</th>');
-      var startDate = picker.$date || (options.startDate ? dateParser.getDateForAttribute('startDate', options.startDate) : new Date());
-      var viewDate = {
-        year: startDate.getFullYear(),
-        month: startDate.getMonth(),
-        date: startDate.getDate()
-      };
-      var views = [ {
-        format: options.dayFormat,
-        split: 7,
-        steps: {
-          month: 1
-        },
-        update: function(date, force) {
-          if (!this.built || force || date.getFullYear() !== viewDate.year || date.getMonth() !== viewDate.month) {
-            angular.extend(viewDate, {
-              year: picker.$date.getFullYear(),
-              month: picker.$date.getMonth(),
-              date: picker.$date.getDate()
-            });
-            picker.$build();
-          } else if (date.getDate() !== viewDate.date || date.getDate() === 1) {
-            viewDate.date = picker.$date.getDate();
-            picker.$updateSelected();
-          }
-        },
-        build: function() {
-          var firstDayOfMonth = new Date(viewDate.year, viewDate.month, 1);
-          var firstDayOfMonthOffset = firstDayOfMonth.getTimezoneOffset();
-          var firstDate = new Date(+firstDayOfMonth - mod(firstDayOfMonth.getDay() - options.startWeek, 7) * 864e5);
-          var firstDateOffset = firstDate.getTimezoneOffset();
-          var today = dateParser.timezoneOffsetAdjust(new Date(), options.timezone).toDateString();
-          if (firstDateOffset !== firstDayOfMonthOffset) firstDate = new Date(+firstDate + (firstDateOffset - firstDayOfMonthOffset) * 6e4);
-          var days = [];
-          var day;
-          for (var i = 0; i < 42; i++) {
-            day = dateParser.daylightSavingAdjust(new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate() + i));
-            days.push({
-              date: day,
-              isToday: day.toDateString() === today,
-              label: formatDate(day, this.format),
-              selected: picker.$date && this.isSelected(day),
-              muted: day.getMonth() !== viewDate.month,
-              disabled: this.isDisabled(day)
-            });
-          }
-          scope.title = formatDate(firstDayOfMonth, options.monthTitleFormat);
-          scope.showLabels = true;
-          scope.labels = weekDaysLabelsHtml;
-          scope.rows = split(days, this.split);
-          this.built = true;
-        },
-        isSelected: function(date) {
-          return picker.$date && date.getFullYear() === picker.$date.getFullYear() && date.getMonth() === picker.$date.getMonth() && date.getDate() === picker.$date.getDate();
-        },
-        isDisabled: function(date) {
-          var time = date.getTime();
-          if (time < options.minDate || time > options.maxDate) return true;
-          if (options.daysOfWeekDisabled.indexOf(date.getDay()) !== -1) return true;
-          if (options.disabledDateRanges) {
-            for (var i = 0; i < options.disabledDateRanges.length; i++) {
-              if (time >= options.disabledDateRanges[i].start && time <= options.disabledDateRanges[i].end) {
-                return true;
-              }
-            }
-          }
-          return false;
-        },
-        onKeyDown: function(evt) {
-          if (!picker.$date) {
-            return;
-          }
-          var actualTime = picker.$date.getTime();
-          var newDate;
-          if (evt.keyCode === 37) newDate = new Date(actualTime - 1 * 864e5); else if (evt.keyCode === 38) newDate = new Date(actualTime - 7 * 864e5); else if (evt.keyCode === 39) newDate = new Date(actualTime + 1 * 864e5); else if (evt.keyCode === 40) newDate = new Date(actualTime + 7 * 864e5);
-          if (!this.isDisabled(newDate)) picker.select(newDate, true);
-        }
-      }, {
-        name: 'month',
-        format: options.monthFormat,
-        split: 4,
-        steps: {
-          year: 1
-        },
-        update: function(date, force) {
-          if (!this.built || date.getFullYear() !== viewDate.year) {
-            angular.extend(viewDate, {
-              year: picker.$date.getFullYear(),
-              month: picker.$date.getMonth(),
-              date: picker.$date.getDate()
-            });
-            picker.$build();
-          } else if (date.getMonth() !== viewDate.month) {
-            angular.extend(viewDate, {
-              month: picker.$date.getMonth(),
-              date: picker.$date.getDate()
-            });
-            picker.$updateSelected();
-          }
-        },
-        build: function() {
-          var months = [];
-          var month;
-          for (var i = 0; i < 12; i++) {
-            month = new Date(viewDate.year, i, 1);
-            months.push({
-              date: month,
-              label: formatDate(month, this.format),
-              selected: picker.$isSelected(month),
-              disabled: this.isDisabled(month)
-            });
-          }
-          scope.title = formatDate(month, options.yearTitleFormat);
-          scope.showLabels = false;
-          scope.rows = split(months, this.split);
-          this.built = true;
-        },
-        isSelected: function(date) {
-          return picker.$date && date.getFullYear() === picker.$date.getFullYear() && date.getMonth() === picker.$date.getMonth();
-        },
-        isDisabled: function(date) {
-          var lastDate = +new Date(date.getFullYear(), date.getMonth() + 1, 0);
-          return lastDate < options.minDate || date.getTime() > options.maxDate;
-        },
-        onKeyDown: function(evt) {
-          if (!picker.$date) {
-            return;
-          }
-          var actualMonth = picker.$date.getMonth();
-          var newDate = new Date(picker.$date);
-          if (evt.keyCode === 37) newDate.setMonth(actualMonth - 1); else if (evt.keyCode === 38) newDate.setMonth(actualMonth - 4); else if (evt.keyCode === 39) newDate.setMonth(actualMonth + 1); else if (evt.keyCode === 40) newDate.setMonth(actualMonth + 4);
-          if (!this.isDisabled(newDate)) picker.select(newDate, true);
-        }
-      }, {
-        name: 'year',
-        format: options.yearFormat,
-        split: 4,
-        steps: {
-          year: 12
-        },
-        update: function(date, force) {
-          if (!this.built || force || parseInt(date.getFullYear() / 20, 10) !== parseInt(viewDate.year / 20, 10)) {
-            angular.extend(viewDate, {
-              year: picker.$date.getFullYear(),
-              month: picker.$date.getMonth(),
-              date: picker.$date.getDate()
-            });
-            picker.$build();
-          } else if (date.getFullYear() !== viewDate.year) {
-            angular.extend(viewDate, {
-              year: picker.$date.getFullYear(),
-              month: picker.$date.getMonth(),
-              date: picker.$date.getDate()
-            });
-            picker.$updateSelected();
-          }
-        },
-        build: function() {
-          var firstYear = viewDate.year - viewDate.year % (this.split * 3);
-          var years = [];
-          var year;
-          for (var i = 0; i < 12; i++) {
-            year = new Date(firstYear + i, 0, 1);
-            years.push({
-              date: year,
-              label: formatDate(year, this.format),
-              selected: picker.$isSelected(year),
-              disabled: this.isDisabled(year)
-            });
-          }
-          scope.title = years[0].label + '-' + years[years.length - 1].label;
-          scope.showLabels = false;
-          scope.rows = split(years, this.split);
-          this.built = true;
-        },
-        isSelected: function(date) {
-          return picker.$date && date.getFullYear() === picker.$date.getFullYear();
-        },
-        isDisabled: function(date) {
-          var lastDate = +new Date(date.getFullYear() + 1, 0, 0);
-          return lastDate < options.minDate || date.getTime() > options.maxDate;
-        },
-        onKeyDown: function(evt) {
-          if (!picker.$date) {
-            return;
-          }
-          var actualYear = picker.$date.getFullYear();
-          var newDate = new Date(picker.$date);
-          if (evt.keyCode === 37) newDate.setYear(actualYear - 1); else if (evt.keyCode === 38) newDate.setYear(actualYear - 4); else if (evt.keyCode === 39) newDate.setYear(actualYear + 1); else if (evt.keyCode === 40) newDate.setYear(actualYear + 4);
-          if (!this.isDisabled(newDate)) picker.select(newDate, true);
-        }
-      } ];
-      return {
-        views: options.minView ? Array.prototype.slice.call(views, options.minView) : views,
-        viewDate: viewDate
-      };
-    };
-  } ];
-});
-/**
- * angular-strap
- * @version v2.3.8 - 2016-03-31
- * @link http://mgcrea.github.io/angular-strap
- * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
- * @license MIT License, http://www.opensource.org/licenses/MIT
- */
-'use strict';
-
 angular.module('mgcrea.ngStrap.helpers.dateFormatter', []).service('$dateFormatter', [ '$locale', 'dateFilter', function($locale, dateFilter) {
   this.getDefaultLocale = function() {
     return $locale.id;
@@ -61637,23 +61065,6 @@ angular.module('mgcrea.ngStrap.helpers.dateFormatter', []).service('$dateFormatt
     return dateFilter(date, format, timezone);
   };
 } ]);
-/**
- * angular-strap
- * @version v2.0.2 - 2014-04-27
- * @link http://mgcrea.github.io/angular-strap
- * @author Olivier Louvignes (olivier@mg-crea.com)
- * @license MIT License, http://www.opensource.org/licenses/MIT
- *
- *
- * 08/07/2014 | jgabriel | Patcheado para que funcione correctamente con FontAwesome y Bootswatch
- */
-angular.module('mgcrea.ngStrap.datepicker').run([
-    '$templateCache',
-    function($templateCache) {
-        $templateCache.put('datepicker/datepicker.tpl.html', '<div class="dropdown-menu datepicker" ng-class="\'datepicker-mode-\' + $mode" style="max-width: 320px"><table style="table-layout: fixed; height: 100%; width: 100%"><thead><tr class="text-center"><th><button tabindex="-1" type="button" class="btn btn-link pull-left" ng-click="$selectPane(-1)"><i class="mdi mdi-chevron-left"></i></button></th><th colspan="{{ rows[0].length - 2 }}"><button tabindex="-1" type="button" class="btn btn-link btn-block text-strong" ng-click="$toggleMode()"><strong style="text-transform: capitalize" ng-bind="title"></strong></button></th><th><button tabindex="-1" type="button" class="btn btn-link pull-right" ng-click="$selectPane(+1)"><i class="mdi mdi-chevron-right"></i></button></th></tr><tr ng-if="showLabels" ng-bind-html="labels"></tr></thead><tbody><tr ng-repeat="(i, row) in rows" height="{{ 100 / rows.length }}%"><td class="text-center" ng-repeat="(j, el) in row"><button tabindex="-1" type="button" class="btn" style="width: 100%" ng-class="{\'btn-primary\': el.selected, \'btn-info btn-today\': el.isToday && !el.selected, \'btn-link\': !el.selected}" ng-click="$select(el.date)" ng-disabled="el.disabled"><span ng-class="{\'text-muted\': el.muted}" ng-bind="el.label"></span></button></td></tr></tbody></table></div>');
-    }
-]);
-
 /**
  * angular-strap
  * @version v2.3.8 - 2016-03-31
@@ -62247,497 +61658,6 @@ angular.module('mgcrea.ngStrap.popover', [ 'mgcrea.ngStrap.tooltip' ]).provider(
 angular.module('mgcrea.ngStrap.popover').run([ '$templateCache', function($templateCache) {
   $templateCache.put('popover/popover.tpl.html', '<div class="popover" tabindex="-1"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind="content"></div></div>');
 } ]);
-/**
- * angular-strap
- * @version v2.3.8 - 2016-03-31
- * @link http://mgcrea.github.io/angular-strap
- * @author Olivier Louvignes <olivier@mg-crea.com> (https://github.com/mgcrea)
- * @license MIT License, http://www.opensource.org/licenses/MIT
- */
-'use strict';
-
-angular.module('mgcrea.ngStrap.timepicker', [ 'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.helpers.dateFormatter', 'mgcrea.ngStrap.tooltip' ]).provider('$timepicker', function() {
-  var defaults = this.defaults = {
-    animation: 'am-fade',
-    prefixClass: 'timepicker',
-    placement: 'bottom-left',
-    templateUrl: 'timepicker/timepicker.tpl.html',
-    trigger: 'focus',
-    container: false,
-    keyboard: true,
-    html: false,
-    delay: 0,
-    useNative: true,
-    timeType: 'date',
-    timeFormat: 'shortTime',
-    timezone: null,
-    modelTimeFormat: null,
-    autoclose: false,
-    minTime: -Infinity,
-    maxTime: +Infinity,
-    length: 5,
-    hourStep: 1,
-    minuteStep: 5,
-    secondStep: 5,
-    roundDisplay: false,
-    iconUp: 'glyphicon glyphicon-chevron-up',
-    iconDown: 'glyphicon glyphicon-chevron-down',
-    arrowBehavior: 'pager'
-  };
-  this.$get = [ '$window', '$document', '$rootScope', '$sce', '$dateFormatter', '$tooltip', '$timeout', function($window, $document, $rootScope, $sce, $dateFormatter, $tooltip, $timeout) {
-    var isNative = /(ip[ao]d|iphone|android)/gi.test($window.navigator.userAgent);
-    var isTouch = 'createTouch' in $window.document && isNative;
-    if (!defaults.lang) {
-      defaults.lang = $dateFormatter.getDefaultLocale();
-    }
-    function timepickerFactory(element, controller, config) {
-      var $timepicker = $tooltip(element, angular.extend({}, defaults, config));
-      var parentScope = config.scope;
-      var options = $timepicker.$options;
-      var scope = $timepicker.$scope;
-      var lang = options.lang;
-      var formatDate = function(date, format, timezone) {
-        return $dateFormatter.formatDate(date, format, lang, timezone);
-      };
-      function floorMinutes(time) {
-        var coeff = 1e3 * 60 * options.minuteStep;
-        return new Date(Math.floor(time.getTime() / coeff) * coeff);
-      }
-      var selectedIndex = 0;
-      var defaultDate = options.roundDisplay ? floorMinutes(new Date()) : new Date();
-      var startDate = controller.$dateValue || defaultDate;
-      var viewDate = {
-        hour: startDate.getHours(),
-        meridian: startDate.getHours() < 12,
-        minute: startDate.getMinutes(),
-        second: startDate.getSeconds(),
-        millisecond: startDate.getMilliseconds()
-      };
-      var format = $dateFormatter.getDatetimeFormat(options.timeFormat, lang);
-      var hoursFormat = $dateFormatter.hoursFormat(format);
-      var timeSeparator = $dateFormatter.timeSeparator(format);
-      var minutesFormat = $dateFormatter.minutesFormat(format);
-      var secondsFormat = $dateFormatter.secondsFormat(format);
-      var showSeconds = $dateFormatter.showSeconds(format);
-      var showAM = $dateFormatter.showAM(format);
-      scope.$iconUp = options.iconUp;
-      scope.$iconDown = options.iconDown;
-      scope.$select = function(date, index) {
-        $timepicker.select(date, index);
-      };
-      scope.$moveIndex = function(value, index) {
-        $timepicker.$moveIndex(value, index);
-      };
-      scope.$switchMeridian = function(date) {
-        $timepicker.switchMeridian(date);
-      };
-      $timepicker.update = function(date) {
-        if (angular.isDate(date) && !isNaN(date.getTime())) {
-          $timepicker.$date = date;
-          angular.extend(viewDate, {
-            hour: date.getHours(),
-            minute: date.getMinutes(),
-            second: date.getSeconds(),
-            millisecond: date.getMilliseconds()
-          });
-          $timepicker.$build();
-        } else if (!$timepicker.$isBuilt) {
-          $timepicker.$build();
-        }
-      };
-      $timepicker.select = function(date, index, keep) {
-        if (!controller.$dateValue || isNaN(controller.$dateValue.getTime())) controller.$dateValue = new Date(1970, 0, 1);
-        if (!angular.isDate(date)) date = new Date(date);
-        if (index === 0) controller.$dateValue.setHours(date.getHours()); else if (index === 1) controller.$dateValue.setMinutes(date.getMinutes()); else if (index === 2) controller.$dateValue.setSeconds(date.getSeconds());
-        controller.$setViewValue(angular.copy(controller.$dateValue));
-        controller.$render();
-        if (options.autoclose && !keep) {
-          $timeout(function() {
-            $timepicker.hide(true);
-          });
-        }
-      };
-      $timepicker.switchMeridian = function(date) {
-        if (!controller.$dateValue || isNaN(controller.$dateValue.getTime())) {
-          return;
-        }
-        var hours = (date || controller.$dateValue).getHours();
-        controller.$dateValue.setHours(hours < 12 ? hours + 12 : hours - 12);
-        controller.$setViewValue(angular.copy(controller.$dateValue));
-        controller.$render();
-      };
-      $timepicker.$build = function() {
-        var i;
-        var midIndex = scope.midIndex = parseInt(options.length / 2, 10);
-        var hours = [];
-        var hour;
-        for (i = 0; i < options.length; i++) {
-          hour = new Date(1970, 0, 1, viewDate.hour - (midIndex - i) * options.hourStep);
-          hours.push({
-            date: hour,
-            label: formatDate(hour, hoursFormat),
-            selected: $timepicker.$date && $timepicker.$isSelected(hour, 0),
-            disabled: $timepicker.$isDisabled(hour, 0)
-          });
-        }
-        var minutes = [];
-        var minute;
-        for (i = 0; i < options.length; i++) {
-          minute = new Date(1970, 0, 1, 0, viewDate.minute - (midIndex - i) * options.minuteStep);
-          minutes.push({
-            date: minute,
-            label: formatDate(minute, minutesFormat),
-            selected: $timepicker.$date && $timepicker.$isSelected(minute, 1),
-            disabled: $timepicker.$isDisabled(minute, 1)
-          });
-        }
-        var seconds = [];
-        var second;
-        for (i = 0; i < options.length; i++) {
-          second = new Date(1970, 0, 1, 0, 0, viewDate.second - (midIndex - i) * options.secondStep);
-          seconds.push({
-            date: second,
-            label: formatDate(second, secondsFormat),
-            selected: $timepicker.$date && $timepicker.$isSelected(second, 2),
-            disabled: $timepicker.$isDisabled(second, 2)
-          });
-        }
-        var rows = [];
-        for (i = 0; i < options.length; i++) {
-          if (showSeconds) {
-            rows.push([ hours[i], minutes[i], seconds[i] ]);
-          } else {
-            rows.push([ hours[i], minutes[i] ]);
-          }
-        }
-        scope.rows = rows;
-        scope.showSeconds = showSeconds;
-        scope.showAM = showAM;
-        scope.isAM = ($timepicker.$date || hours[midIndex].date).getHours() < 12;
-        scope.timeSeparator = timeSeparator;
-        $timepicker.$isBuilt = true;
-      };
-      $timepicker.$isSelected = function(date, index) {
-        if (!$timepicker.$date) return false; else if (index === 0) {
-          return date.getHours() === $timepicker.$date.getHours();
-        } else if (index === 1) {
-          return date.getMinutes() === $timepicker.$date.getMinutes();
-        } else if (index === 2) {
-          return date.getSeconds() === $timepicker.$date.getSeconds();
-        }
-      };
-      $timepicker.$isDisabled = function(date, index) {
-        var selectedTime;
-        if (index === 0) {
-          selectedTime = date.getTime() + viewDate.minute * 6e4 + viewDate.second * 1e3;
-        } else if (index === 1) {
-          selectedTime = date.getTime() + viewDate.hour * 36e5 + viewDate.second * 1e3;
-        } else if (index === 2) {
-          selectedTime = date.getTime() + viewDate.hour * 36e5 + viewDate.minute * 6e4;
-        }
-        return selectedTime < options.minTime * 1 || selectedTime > options.maxTime * 1;
-      };
-      scope.$arrowAction = function(value, index) {
-        if (options.arrowBehavior === 'picker') {
-          $timepicker.$setTimeByStep(value, index);
-        } else {
-          $timepicker.$moveIndex(value, index);
-        }
-      };
-      $timepicker.$setTimeByStep = function(value, index) {
-        var newDate = new Date($timepicker.$date || startDate);
-        var hours = newDate.getHours();
-        var minutes = newDate.getMinutes();
-        var seconds = newDate.getSeconds();
-        if (index === 0) {
-          newDate.setHours(hours - parseInt(options.hourStep, 10) * value);
-        } else if (index === 1) {
-          newDate.setMinutes(minutes - parseInt(options.minuteStep, 10) * value);
-        } else if (index === 2) {
-          newDate.setSeconds(seconds - parseInt(options.secondStep, 10) * value);
-        }
-        $timepicker.select(newDate, index, true);
-      };
-      $timepicker.$moveIndex = function(value, index) {
-        var targetDate;
-        if (index === 0) {
-          targetDate = new Date(1970, 0, 1, viewDate.hour + value * options.length, viewDate.minute, viewDate.second);
-          angular.extend(viewDate, {
-            hour: targetDate.getHours()
-          });
-        } else if (index === 1) {
-          targetDate = new Date(1970, 0, 1, viewDate.hour, viewDate.minute + value * options.length * options.minuteStep, viewDate.second);
-          angular.extend(viewDate, {
-            minute: targetDate.getMinutes()
-          });
-        } else if (index === 2) {
-          targetDate = new Date(1970, 0, 1, viewDate.hour, viewDate.minute, viewDate.second + value * options.length * options.secondStep);
-          angular.extend(viewDate, {
-            second: targetDate.getSeconds()
-          });
-        }
-        $timepicker.$build();
-      };
-      $timepicker.$onMouseDown = function(evt) {
-        if (evt.target.nodeName.toLowerCase() !== 'input') evt.preventDefault();
-        evt.stopPropagation();
-        if (isTouch) {
-          var targetEl = angular.element(evt.target);
-          if (targetEl[0].nodeName.toLowerCase() !== 'button') {
-            targetEl = targetEl.parent();
-          }
-          targetEl.triggerHandler('click');
-        }
-      };
-      $timepicker.$onKeyDown = function(evt) {
-        if (!/(38|37|39|40|13)/.test(evt.keyCode) || evt.shiftKey || evt.altKey) return;
-        evt.preventDefault();
-        evt.stopPropagation();
-        if (evt.keyCode === 13) {
-          $timepicker.hide(true);
-          return;
-        }
-        var newDate = new Date($timepicker.$date);
-        var hours = newDate.getHours();
-        var hoursLength = formatDate(newDate, hoursFormat).length;
-        var minutes = newDate.getMinutes();
-        var minutesLength = formatDate(newDate, minutesFormat).length;
-        var seconds = newDate.getSeconds();
-        var secondsLength = formatDate(newDate, secondsFormat).length;
-        var sepLength = 1;
-        var lateralMove = /(37|39)/.test(evt.keyCode);
-        var count = 2 + showSeconds * 1 + showAM * 1;
-        if (lateralMove) {
-          if (evt.keyCode === 37) selectedIndex = selectedIndex < 1 ? count - 1 : selectedIndex - 1; else if (evt.keyCode === 39) selectedIndex = selectedIndex < count - 1 ? selectedIndex + 1 : 0;
-        }
-        var selectRange = [ 0, hoursLength ];
-        var incr = 0;
-        if (evt.keyCode === 38) incr = -1;
-        if (evt.keyCode === 40) incr = +1;
-        var isSeconds = selectedIndex === 2 && showSeconds;
-        var isMeridian = selectedIndex === 2 && !showSeconds || selectedIndex === 3 && showSeconds;
-        if (selectedIndex === 0) {
-          newDate.setHours(hours + incr * parseInt(options.hourStep, 10));
-          hoursLength = formatDate(newDate, hoursFormat).length;
-          selectRange = [ 0, hoursLength ];
-        } else if (selectedIndex === 1) {
-          newDate.setMinutes(minutes + incr * parseInt(options.minuteStep, 10));
-          minutesLength = formatDate(newDate, minutesFormat).length;
-          selectRange = [ hoursLength + sepLength, minutesLength ];
-        } else if (isSeconds) {
-          newDate.setSeconds(seconds + incr * parseInt(options.secondStep, 10));
-          secondsLength = formatDate(newDate, secondsFormat).length;
-          selectRange = [ hoursLength + sepLength + minutesLength + sepLength, secondsLength ];
-        } else if (isMeridian) {
-          if (!lateralMove) $timepicker.switchMeridian();
-          selectRange = [ hoursLength + sepLength + minutesLength + sepLength + (secondsLength + sepLength) * showSeconds, 2 ];
-        }
-        $timepicker.select(newDate, selectedIndex, true);
-        createSelection(selectRange[0], selectRange[1]);
-        parentScope.$digest();
-      };
-      function createSelection(start, length) {
-        var end = start + length;
-        if (element[0].createTextRange) {
-          var selRange = element[0].createTextRange();
-          selRange.collapse(true);
-          selRange.moveStart('character', start);
-          selRange.moveEnd('character', end);
-          selRange.select();
-        } else if (element[0].setSelectionRange) {
-          element[0].setSelectionRange(start, end);
-        } else if (angular.isUndefined(element[0].selectionStart)) {
-          element[0].selectionStart = start;
-          element[0].selectionEnd = end;
-        }
-      }
-      function focusElement() {
-        element[0].focus();
-      }
-      var _init = $timepicker.init;
-      $timepicker.init = function() {
-        if (isNative && options.useNative) {
-          element.prop('type', 'time');
-          element.css('-webkit-appearance', 'textfield');
-          return;
-        } else if (isTouch) {
-          element.prop('type', 'text');
-          element.attr('readonly', 'true');
-          element.on('click', focusElement);
-        }
-        _init();
-      };
-      var _destroy = $timepicker.destroy;
-      $timepicker.destroy = function() {
-        if (isNative && options.useNative) {
-          element.off('click', focusElement);
-        }
-        _destroy();
-      };
-      var _show = $timepicker.show;
-      $timepicker.show = function() {
-        if (!isTouch && element.attr('readonly') || element.attr('disabled')) return;
-        _show();
-        $timeout(function() {
-          if ($timepicker.$element) $timepicker.$element.on(isTouch ? 'touchstart' : 'mousedown', $timepicker.$onMouseDown);
-          if (options.keyboard) {
-            if (element) element.on('keydown', $timepicker.$onKeyDown);
-          }
-        }, 0, false);
-      };
-      var _hide = $timepicker.hide;
-      $timepicker.hide = function(blur) {
-        if (!$timepicker.$isShown) return;
-        if ($timepicker.$element) $timepicker.$element.off(isTouch ? 'touchstart' : 'mousedown', $timepicker.$onMouseDown);
-        if (options.keyboard) {
-          if (element) element.off('keydown', $timepicker.$onKeyDown);
-        }
-        _hide(blur);
-      };
-      return $timepicker;
-    }
-    timepickerFactory.defaults = defaults;
-    return timepickerFactory;
-  } ];
-}).directive('bsTimepicker', [ '$window', '$parse', '$q', '$dateFormatter', '$dateParser', '$timepicker', function($window, $parse, $q, $dateFormatter, $dateParser, $timepicker) {
-  var defaults = $timepicker.defaults;
-  var isNative = /(ip[ao]d|iphone|android)/gi.test($window.navigator.userAgent);
-  return {
-    restrict: 'EAC',
-    require: 'ngModel',
-    link: function postLink(scope, element, attr, controller) {
-      var options = {
-        scope: scope
-      };
-      angular.forEach([ 'template', 'templateUrl', 'controller', 'controllerAs', 'placement', 'container', 'delay', 'trigger', 'keyboard', 'html', 'animation', 'autoclose', 'timeType', 'timeFormat', 'timezone', 'modelTimeFormat', 'useNative', 'hourStep', 'minuteStep', 'secondStep', 'length', 'arrowBehavior', 'iconUp', 'iconDown', 'roundDisplay', 'id', 'prefixClass', 'prefixEvent' ], function(key) {
-        if (angular.isDefined(attr[key])) options[key] = attr[key];
-      });
-      var falseValueRegExp = /^(false|0|)$/i;
-      angular.forEach([ 'html', 'container', 'autoclose', 'useNative', 'roundDisplay' ], function(key) {
-        if (angular.isDefined(attr[key]) && falseValueRegExp.test(attr[key])) {
-          options[key] = false;
-        }
-      });
-      if (isNative && (options.useNative || defaults.useNative)) options.timeFormat = 'HH:mm';
-      var timepicker = $timepicker(element, controller, options);
-      options = timepicker.$options;
-      var lang = options.lang;
-      var formatDate = function(date, format, timezone) {
-        return $dateFormatter.formatDate(date, format, lang, timezone);
-      };
-      if (attr.bsShow) {
-        scope.$watch(attr.bsShow, function(newValue, oldValue) {
-          if (!timepicker || !angular.isDefined(newValue)) return;
-          if (angular.isString(newValue)) newValue = !!newValue.match(/true|,?(timepicker),?/i);
-          if (newValue === true) {
-            timepicker.show();
-          } else {
-            timepicker.hide();
-          }
-        });
-      }
-      var dateParser = $dateParser({
-        format: options.timeFormat,
-        lang: lang
-      });
-      angular.forEach([ 'minTime', 'maxTime' ], function(key) {
-        if (angular.isDefined(attr[key])) {
-          attr.$observe(key, function(newValue) {
-            timepicker.$options[key] = dateParser.getTimeForAttribute(key, newValue);
-            if (!isNaN(timepicker.$options[key])) timepicker.$build();
-            validateAgainstMinMaxTime(controller.$dateValue);
-          });
-        }
-      });
-      scope.$watch(attr.ngModel, function(newValue, oldValue) {
-        timepicker.update(controller.$dateValue);
-      }, true);
-      function validateAgainstMinMaxTime(parsedTime) {
-        if (!angular.isDate(parsedTime)) return;
-        var isMinValid = isNaN(options.minTime) || new Date(parsedTime.getTime()).setFullYear(1970, 0, 1) >= options.minTime;
-        var isMaxValid = isNaN(options.maxTime) || new Date(parsedTime.getTime()).setFullYear(1970, 0, 1) <= options.maxTime;
-        var isValid = isMinValid && isMaxValid;
-        controller.$setValidity('date', isValid);
-        controller.$setValidity('min', isMinValid);
-        controller.$setValidity('max', isMaxValid);
-        if (!isValid) {
-          return;
-        }
-        controller.$dateValue = parsedTime;
-      }
-      controller.$parsers.unshift(function(viewValue) {
-        var date;
-        if (!viewValue) {
-          controller.$setValidity('date', true);
-          return null;
-        }
-        var parsedTime = angular.isDate(viewValue) ? viewValue : dateParser.parse(viewValue, controller.$dateValue);
-        if (!parsedTime || isNaN(parsedTime.getTime())) {
-          controller.$setValidity('date', false);
-          return undefined;
-        }
-        validateAgainstMinMaxTime(parsedTime);
-        if (options.timeType === 'string') {
-          date = dateParser.timezoneOffsetAdjust(parsedTime, options.timezone, true);
-          return formatDate(date, options.modelTimeFormat || options.timeFormat);
-        }
-        date = dateParser.timezoneOffsetAdjust(controller.$dateValue, options.timezone, true);
-        if (options.timeType === 'number') {
-          return date.getTime();
-        } else if (options.timeType === 'unix') {
-          return date.getTime() / 1e3;
-        } else if (options.timeType === 'iso') {
-          return date.toISOString();
-        }
-        return new Date(date);
-      });
-      controller.$formatters.push(function(modelValue) {
-        var date;
-        if (angular.isUndefined(modelValue) || modelValue === null) {
-          date = NaN;
-        } else if (angular.isDate(modelValue)) {
-          date = modelValue;
-        } else if (options.timeType === 'string') {
-          date = dateParser.parse(modelValue, null, options.modelTimeFormat);
-        } else if (options.timeType === 'unix') {
-          date = new Date(modelValue * 1e3);
-        } else {
-          date = new Date(modelValue);
-        }
-        controller.$dateValue = dateParser.timezoneOffsetAdjust(date, options.timezone);
-        return getTimeFormattedString();
-      });
-      controller.$render = function() {
-        element.val(getTimeFormattedString());
-      };
-      function getTimeFormattedString() {
-        return !controller.$dateValue || isNaN(controller.$dateValue.getTime()) ? '' : formatDate(controller.$dateValue, options.timeFormat);
-      }
-      scope.$on('$destroy', function() {
-        if (timepicker) timepicker.destroy();
-        options = null;
-        timepicker = null;
-      });
-    }
-  };
-} ]);
-/**
- * angular-strap
- * @version v2.0.2 - 2014-04-27
- * @link http://mgcrea.github.io/angular-strap
- * @author Olivier Louvignes (olivier@mg-crea.com)
- * @license MIT License, http://www.opensource.org/licenses/MIT
- *
- *
- * 08/07/2014 | jgabriel | Patcheado para que funcione correctamente con FontAwesome y Bootswatch
- */
-angular.module('mgcrea.ngStrap.timepicker').run([
-    '$templateCache',
-    function($templateCache) {
-        $templateCache.put('timepicker/timepicker.tpl.html', '<div class="dropdown-menu timepicker" style="min-width: 0px;width: auto"><table height="100%"><thead><tr class="text-center"><th><button tabindex="-1" type="button" class="btn btn-link pull-left" ng-click="$moveIndex(-1, 0)"><i class="mdi mdi-chevron-up"></i></button></th><th>&nbsp;</th><th><button tabindex="-1" type="button" class="btn btn-link pull-left" ng-click="$moveIndex(-1, 1)"><i class="mdi mdi-chevron-up"></i></button></th></tr></thead><tbody><tr ng-repeat="(i, row) in rows"><td class="text-center"><button tabindex="-1" style="width: 100%" type="button" class="btn" ng-class="{\'btn-primary\': row[0].selected, \'btn-link\': !row[0].selected}" ng-click="$select(row[0].date, 0)" ng-disabled="row[0].disabled"><span ng-class="{\'text-muted\': row[0].muted}" ng-bind="row[0].label"></span></button></td><td><span ng-bind="i == midIndex ? \':\' : \' \'"></span></td><td class="text-center"><button tabindex="-1" ng-if="row[1].date" style="width: 100%" type="button" class="btn" ng-class="{\'btn-primary\': row[1].selected, \'btn-link\': !row[1].selected}" ng-click="$select(row[1].date, 1)" ng-disabled="row[1].disabled"><span ng-class="{\'text-muted\': row[1].muted}" ng-bind="row[1].label"></span></button></td><td ng-if="showAM">&nbsp;</td><td ng-if="showAM"><button tabindex="-1" ng-show="i == midIndex - !isAM * 1" style="width: 100%" type="button" ng-class="{\'btn-primary\': !!isAM}" class="btn btn-default" ng-click="$switchMeridian()" ng-disabled="el.disabled">AM</button> <button tabindex="-1" ng-show="i == midIndex + 1 - !isAM * 1" style="width: 100%" type="button" ng-class="{\'btn-primary\': !isAM}" class="btn btn-default" ng-click="$switchMeridian()" ng-disabled="el.disabled">PM</button></td></tr></tbody><tfoot><tr class="text-center"><th><button tabindex="-1" type="button" class="btn btn-link pull-left" ng-click="$moveIndex(1, 0)"><i class="mdi mdi-chevron-down"></i></button></th><th>&nbsp;</th><th><button tabindex="-1" type="button" class="btn btn-link pull-left" ng-click="$moveIndex(1, 1)"><i class="mdi mdi-chevron-down"></i></button></th></tr></tfoot></table></div>');
-    }
-]);
-
 /**
  * angular-strap
  * @version v2.3.8 - 2016-03-31
@@ -66641,7 +65561,7 @@ angular.module('plex').directive('plexMin', function () {
       </file>
     </example>
  **/
-angular.module('plex').directive("plex", ['$injector', function($injector) {
+angular.module('plex').directive('plex', ['$injector', '$filter', function($injector, $filter) {
     return {
         restrict: 'EAC',
         require: ['?ngModel', '^?form'],
@@ -66654,16 +65574,16 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
             var dinamicLink = null;
             switch (type) {
                 case "date":
-                    element.attr("bs-datepicker", "");
-                    attrs.autoclose = true;
-                    attrs.dateFormat = attrs.dateFormat || "mediumDate";
-                    dinamicLink = $injector.get("bsDatepickerDirective")[0].compile(element, attrs);
-                    break;
+                if (!attrs.dateFormat)
+                    attrs.dateFormat = 'DD/MM/YYYY';
+                break;
                 case "time":
-                    element.attr("bs-timepicker", "");
-                    attrs.autoclose = true;
-                    //attrs.minuteStep = attrs.minuteStep || 30;  POR UN BUG NO FUNCIONA. Esperando solución
-                    dinamicLink = $injector.get("bsTimepickerDirective")[0].compile(element, attrs);
+                if (!attrs.dateFormat)
+                    attrs.dateFormat = 'HH:mm';
+                break;
+                case "datetime":
+                    if (!attrs.dateFormat)
+                        attrs.dateFormat = 'DD/MM/YYYY HH:mm';
                     break;
                 case "select":
                     attrs.plexSelect = attrs.plex;
@@ -66740,20 +65660,44 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                         spans.eq(0).css("display", required ? "block" : "none");
                         spans.eq(1).css("display", invalid ? "block" : "none");
 
-                        // Recalcula el tamaño del textarea
-                        if (type == "textarea" && modelController.$viewValue) {
-                            var timer = window.setTimeout(function(){
-                                if (element[0].scrollHeight > 0){
-                                    element.css('height', 'auto').css('height', element[0].scrollHeight + (element[0].offsetHeight - element[0].clientHeight));
-                                    window.clearTimeout(timer);
-                                }
-                            }, 100);
+                        // Según el tipo ...
+                        switch (type) {
+                            case 'textarea':
+                                // Recalcula el tamaño del textarea
+                                var timer = window.setTimeout(function() {
+                                    if (element[0].scrollHeight > 0) {
+                                        element.css('height', 'auto').css('height', element[0].scrollHeight + (element[0].offsetHeight - element[0].clientHeight));
+                                        window.clearTimeout(timer);
+                                    }
+                                }, 100);
+                                break;
                         }
                     };
 
                     if (modelController) {
                         modelController.$parsers.push(function(value) {
                             validator(element, modelController);
+
+                            // Según el tipo ...
+                            switch (type) {
+                                case "date":
+                                case "time":
+                                case "datetime":
+                                    if (modelController.$viewValue)
+                                        value = moment(modelController.$viewValue, attrs.dateFormat).toDate();
+                                    break;
+                            }
+                            return value;
+                        });
+                        modelController.$formatters.push(function(value) {
+                            switch (type) {
+                                case "date":
+                                case "time":
+                                case "datetime":
+                                    if (value && angular.isDate(value))
+                                        value = moment(value).format(attrs.dateFormat);
+                                    break;
+                            }
                             return value;
                         });
                         scope.$watch(function() {
@@ -66768,42 +65712,35 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                     var inputGroup;
                     switch (type) {
                         case "date":
-                            inputGroup = angular.element("<div class='input-group'>");
-                            element.before(inputGroup);
-                            element.detach();
-                            if (attrs.selectOnly) {
-                                element.attr('readonly', 'readonly');
-                                element.css({
-                                    cursor: "pointer"
-                                });
-                                element.on('click', function() {
-                                    angular.element(this).next().find(".btn").click();
-                                });
-                            }
-                            inputGroup.append(element);
-                            element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-calendar'></i></a></span>").on('click', function() {
-                                // element.removeAttr('readonly');
-                                element.focus();
-                                // element.attr('readonly', 'readonly');
-                            }));
-
-                            // Soluciona el bug de ng-readonly
-                            if (attrs.ngReadonly)
-                                scope.$watch(attrs.ngReadonly, function(value) {
-                                    if (value)
-                                        element.attr("disabled", "disabled");
-                                    else
-                                        element.removeAttr("disabled");
-                                });
-                            break;
                         case "time":
+                        case "datetime":
+                            element.bootstrapMaterialDatePicker({
+                                lang: 'es',
+                                format: attrs.dateFormat,
+                                time: type != 'date',
+                                date: type != 'time',
+                                okText: 'Seleccionar',
+                                cancelText: 'Cerrar',
+                                clearButton: false,
+                            });
+                            // Tweak calendar
+                            var calendar = angular.element("#" + element.attr("data-dtp"));
+                            calendar.find('.dtp-close').hide();
+                            calendar.find('.material-icons').each(function() {
+                                var $this = angular.element(this);
+                                $this.addClass('mdi mdi-' + $this.text().replace('_', '-'));
+                                $this.text('');
+                            });
+                            calendar.find('.dtp-btn-cancel').addClass('btn-default margin-right');
+                            calendar.find('.dtp-btn-ok').addClass('btn-primary');
+
+                            // Arma el grupo
                             inputGroup = angular.element("<div class='input-group'>");
                             element.before(inputGroup);
                             element.detach();
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-clock'></i></a></span>").on('click', function() {
+                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-" + ((type == "time") ? "clock" : "calendar") + "'></i></a></span>").on('click', function() {
                                 element.focus();
                             }));
 
@@ -67006,11 +65943,17 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                     else {
                                         var result = angular.isArray(controller.$modelValue) ? controller.$modelValue : [controller.$modelValue];
                                         if (hasOptions) {
-                                            callback(result.map(function(i) {
-                                                return {
-                                                    id: i.value,
-                                                    text: i.text
-                                                };
+                                            var $options = element.find('option');
+                                            callback(result.map(function(value) {
+                                                // Find option by value
+                                                for (var i = 0; i < $options.length; i++) {
+                                                    var $option = angular.element($options[i]);
+                                                    if ($option.val() == value)
+                                                        return {
+                                                            id: $option.val(),
+                                                            text: $option.text()
+                                                        };
+                                                }
                                             }));
                                         } else {
                                             callback(result.map(function(i) {
@@ -67029,12 +65972,12 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                     if (isMultiple) {
                                         if (angular.isArray(controller.$modelValue)) {
                                             newValue = controller.$modelValue;
-                                            newValue.push(item.dataItem);
+                                            newValue.push(hasOptions ? item.id : item.dataItem);
                                         } else {
-                                            newValue = [item.dataItem];
+                                            newValue = [hasOptions ? item.id : item.dataItem];
                                         }
                                     } else {
-                                        newValue = item.dataItem;
+                                        newValue = hasOptions ? item.id : item.dataItem;
                                     }
                                     scope.$apply(function() {
                                         controller.$setViewValue(newValue);
@@ -67067,8 +66010,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                         self.unselect(params.data);
                                     });
                                 },
-                                destroy: function() {
-                                },
+                                destroy: function() {},
                                 query: function(params, callback) {
                                     if (minimumLength > 0 && (!params || !params.term || params.term.length < minimumLength)) {
                                         select2.trigger('results:message', {
@@ -67110,10 +66052,10 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                         var matches;
                                         if (hasOptions) {
                                             matches = [];
-                                            var $options = element.children();
+                                            var $options = element.find('option');
                                             $options.each(function() {
                                                 var $option = angular.element(this);
-                                                if ($option.is('option') && $option.val() != '? undefined:undefined ?' && (!(params && params.term) || Global.matchText($option.text(), params.term))) {
+                                                if ($option.val() != '? undefined:undefined ?' && (!(params && params.term) || Global.matchText($option.text(), params.term))) {
                                                     matches.push({
                                                         id: $option.val(),
                                                         text: $option.text(),
@@ -67710,11 +66652,11 @@ var requiredModules = [
     'mgcrea.ngStrap.affix',
     'mgcrea.ngStrap.alert',
     'mgcrea.ngStrap.button',
-    'mgcrea.ngStrap.datepicker',
+    // 'mgcrea.ngStrap.datepicker',
+    // 'mgcrea.ngStrap.timepicker',
     'mgcrea.ngStrap.dropdown',
     'mgcrea.ngStrap.modal',
     'mgcrea.ngStrap.popover',
-    'mgcrea.ngStrap.timepicker',
     'mgcrea.ngStrap.tooltip',
     'mgcrea.ngStrap.tab',
     'mgcrea.ngStrap.helpers.dateParser',
