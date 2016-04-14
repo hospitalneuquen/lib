@@ -69,6 +69,10 @@ input[type=radio]:required {
     font-size: 1.5em;
     vertical-align: text-top;
 }
+[class^="icon-"] {
+    font-size: 1.3em;
+    vertical-align: text-bottom;
+}
 // Tabs
 .nav-tabs > li {
     cursor: pointer;
@@ -79,4 +83,13 @@ input[type=radio]:required {
 }
 .navbar-brand {
     padding: 12.5px 15px;
+}
+
+// Animación de las tablas
+.table TR > TD {
+    -webkit-transition: background 300ms ease-in-out;
+    -moz-transition: background 300ms ease-in-out;
+    -ms-transition: background 300ms ease-in-out;
+    -o-transition: background 300ms ease-in-out;
+    transition: background 300ms ease-in-out;
 }

@@ -1,0 +1,58 @@
+.switch label {
+    cursor: pointer;
+}
+.switch label input[type=checkbox] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.switch label .switch-inside {
+    text-align: left;
+    margin-left: 5px;
+}
+.switch label .switch-inside,
+.switch label input[type=checkbox][disabled] + .switch-inside {
+    content: "";
+    display: inline-block;
+    width: 30px;
+    height: 15px;
+    background-color: rgba(80, 80, 80, 0.7);
+    border-radius: 15px;
+    margin-right: 15px;
+    transition: background 0.3s ease;
+    vertical-align: middle;
+}
+.switch label .switch-inside:after {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: #FFFFFF;
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4);
+    left: -5px;
+    top: -3px;
+    border: 1px solid rgba(0,0,0, .54);
+    transition: left 0.3s ease, background 0.3s ease, box-shadow 0.1s ease;
+}
+.switch label input[type=checkbox][disabled] + .switch-inside:after,
+.switch label input[type=checkbox][disabled]:checked + .switch-inside:after {
+    background-color: #BDBDBD;
+}
+.switch label input[type=checkbox] + .switch-inside:active:after,
+.switch label input[type=checkbox][disabled] + .switch-inside:active:after {
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 0 0 15px rgba(0, 0, 0, 0.1);
+}
+.switch label input[type=checkbox]:checked + .switch-inside:after {
+    left: 15px;
+}
+.switch label input[type=checkbox]:checked + .switch-inside {
+    background-color: @brand-primary;
+}
+.switch label input[type=checkbox]:checked + .switch-inside:after {
+    border-color: @brand-primary;
+}
+.switch label input[type=checkbox]:checked + .switch-inside:active:after {
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 0 0 15px fade(@brand-primary, 10%);
+}

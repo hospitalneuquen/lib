@@ -46,7 +46,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
         priority: 598, // Para que el postLink ejecute último. ng-if tiene prioridad 600
         compile: function(element, attrs) {
             // Determina el tipo
-            var type = element.is("SELECT") ? "select" : (attrs.plex || (attrs.type == 'password' ? 'text' : attrs.type));
+            var type = element.is('SELECT') ? 'select' : (element.is('TEXTAREA') ? 'textarea' : (attrs.plex || (attrs.type == 'password' ? 'text' : attrs.type)));
 
             // Inyecta dinámicamente directivas
             var dinamicLink = null;
@@ -78,7 +78,7 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                     var formController = controllers[1];
 
                     // Crea el contenedor
-                    var newParent = (type == 'radio' || type == 'checkbox') ? angular.element("<div class='" + type + "'>") : angular.element("<div class='form-group'>");
+                    var newParent = (type == 'radio' || type == 'checkbox' || type == 'switch') ? angular.element("<div class='" + type + "'>") : angular.element("<div class='form-group'>");
 
                     // Label
                     var label;
@@ -100,22 +100,25 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                     // Actualiza el DOM
                     element.before(newParent);
                     element.detach();
-                    if (type == 'radio' || type == 'checkbox') {
-                        var rippleContainer = angular.element("<span>");
-                        rippleContainer.append(element);
-                        label.prepend(rippleContainer);
-                        // // Ripple
-                        // $mdInkRipple.attach(scope, rippleContainer, {
-                        //     center: true,
-                        //     dimBackground: false,
-                        //     fitRipple: true
-                        // });
-                    } else
-                        newParent.append(element);
-
+                    switch (type) {
+                        case 'switch':
+                            label.prepend('<span class="switch-inside"></span>');
+                            label.prepend(element);
+                            break;
+                        case 'checkbox':
+                            label.prepend('<span class="checkbox-material"><span class="check"></span></span>');
+                            label.prepend(element);
+                            break;
+                        case 'radio':
+                            label.prepend('<span class="circle"></span><span class="check"></span>');
+                            label.prepend(element);
+                            break;
+                        default:
+                            newParent.append(element);
+                    }
 
                     // Elementos de validación
-                    if (type != 'radio' && type != 'checkbox') {
+                    if (type != 'radio' && type != 'checkbox' && type != 'switch') {
                         newParent.append("<span class='help-block'>Requerido</span>");
                         newParent.append("<span class='help-block'>Valor no válido</span>");
                         if (attrs.hint)
@@ -134,6 +137,16 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                         var spans = controlGroup.find(".help-block");
                         spans.eq(0).css("display", required ? "block" : "none");
                         spans.eq(1).css("display", invalid ? "block" : "none");
+
+                        // Recalcula el tamaño del textarea
+                        if (type == "textarea" && modelController.$viewValue) {
+                            var timer = window.setTimeout(function(){
+                                if (element[0].scrollHeight > 0){
+                                    element.css('height', 'auto').css('height', element[0].scrollHeight + (element[0].offsetHeight - element[0].clientHeight));
+                                    window.clearTimeout(timer);
+                                }
+                            }, 100);
+                        }
                     };
 
                     if (modelController) {
@@ -240,24 +253,13 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                             if (modelController)
                                 modelController.$parsers.unshift(numberParsers);
                             break;
-                            // case "bool":
-                            //     var id = "plex" + Math.floor((1 + Math.random()) * 0x10000);
-                            //     element.attr("id", id);
-                            //     element.attr("type", "checkbox");
-                            //     element.attr("class", "onoffswitch-checkbox");
-                            //     // Crea el div contenedor
-                            //     var group = angular.element("<div class='onoffswitch'>");
-                            //     element.before(group);
-                            //     element.detach();
-                            //     group.append(element);
-                            //     // Crea el label
-                            //     var label2 = angular.element('<label class="onoffswitch-label">').appendTo(group);
-                            //     label2.attr("for", id);
-                            //     var span = angular.element('<span class="onoffswitch-inner">').appendTo(label2);
-                            //     span.attr("data-true", attrs.true || "Si");
-                            //     span.attr("data-false", attrs.false || "No");
-                            //     angular.element('<span class="onoffswitch-switch">').appendTo(label2);
-                            //     break;
+
+                        case "textarea":
+                            element.addClass('form-control');
+                            element.on('keyup input focus', function() {
+                                element.css('height', 'auto').css('height', this.scrollHeight + (this.offsetHeight - this.clientHeight));
+                            });
+                            break;
                         case "text":
                             if (attrs.prefix || attrs.suffix) {
                                 inputGroup = angular.element("<div class='input-group'>");
