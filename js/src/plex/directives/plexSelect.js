@@ -85,11 +85,17 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                     else {
                                         var result = angular.isArray(controller.$modelValue) ? controller.$modelValue : [controller.$modelValue];
                                         if (hasOptions) {
-                                            callback(result.map(function(i) {
-                                                return {
-                                                    id: i.value,
-                                                    text: i.text
-                                                };
+                                            var $options = element.find('option');
+                                            callback(result.map(function(value) {
+                                                // Find option by value
+                                                for (var i = 0; i < $options.length; i++) {
+                                                    var $option = angular.element($options[i]);
+                                                    if ($option.val() == value)
+                                                        return {
+                                                            id: $option.val(),
+                                                            text: $option.text()
+                                                        };
+                                                }
                                             }));
                                         } else {
                                             callback(result.map(function(i) {
@@ -108,12 +114,12 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                     if (isMultiple) {
                                         if (angular.isArray(controller.$modelValue)) {
                                             newValue = controller.$modelValue;
-                                            newValue.push(item.dataItem);
+                                            newValue.push(hasOptions ? item.id : item.dataItem);
                                         } else {
-                                            newValue = [item.dataItem];
+                                            newValue = [hasOptions ? item.id : item.dataItem];
                                         }
                                     } else {
-                                        newValue = item.dataItem;
+                                        newValue = hasOptions ? item.id : item.dataItem;
                                     }
                                     scope.$apply(function() {
                                         controller.$setViewValue(newValue);
@@ -146,8 +152,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                         self.unselect(params.data);
                                     });
                                 },
-                                destroy: function() {
-                                },
+                                destroy: function() {},
                                 query: function(params, callback) {
                                     if (minimumLength > 0 && (!params || !params.term || params.term.length < minimumLength)) {
                                         select2.trigger('results:message', {
@@ -189,10 +194,10 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                         var matches;
                                         if (hasOptions) {
                                             matches = [];
-                                            var $options = element.children();
+                                            var $options = element.find('option');
                                             $options.each(function() {
                                                 var $option = angular.element(this);
-                                                if ($option.is('option') && $option.val() != '? undefined:undefined ?' && (!(params && params.term) || Global.matchText($option.text(), params.term))) {
+                                                if ($option.val() != '? undefined:undefined ?' && (!(params && params.term) || Global.matchText($option.text(), params.term))) {
                                                     matches.push({
                                                         id: $option.val(),
                                                         text: $option.text(),

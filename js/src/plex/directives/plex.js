@@ -39,7 +39,7 @@
       </file>
     </example>
  **/
-angular.module('plex').directive("plex", ['$injector', function($injector) {
+angular.module('plex').directive('plex', ['$injector', '$filter', function($injector, $filter) {
     return {
         restrict: 'EAC',
         require: ['?ngModel', '^?form'],
@@ -52,16 +52,16 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
             var dinamicLink = null;
             switch (type) {
                 case "date":
-                    element.attr("bs-datepicker", "");
-                    attrs.autoclose = true;
-                    attrs.dateFormat = attrs.dateFormat || "mediumDate";
-                    dinamicLink = $injector.get("bsDatepickerDirective")[0].compile(element, attrs);
-                    break;
+                if (!attrs.dateFormat)
+                    attrs.dateFormat = 'DD/MM/YYYY';
+                break;
                 case "time":
-                    element.attr("bs-timepicker", "");
-                    attrs.autoclose = true;
-                    //attrs.minuteStep = attrs.minuteStep || 30;  POR UN BUG NO FUNCIONA. Esperando solución
-                    dinamicLink = $injector.get("bsTimepickerDirective")[0].compile(element, attrs);
+                if (!attrs.dateFormat)
+                    attrs.dateFormat = 'HH:mm';
+                break;
+                case "datetime":
+                    if (!attrs.dateFormat)
+                        attrs.dateFormat = 'DD/MM/YYYY HH:mm';
                     break;
                 case "select":
                     attrs.plexSelect = attrs.plex;
@@ -138,20 +138,44 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                         spans.eq(0).css("display", required ? "block" : "none");
                         spans.eq(1).css("display", invalid ? "block" : "none");
 
-                        // Recalcula el tamaño del textarea
-                        if (type == "textarea" && modelController.$viewValue) {
-                            var timer = window.setTimeout(function(){
-                                if (element[0].scrollHeight > 0){
-                                    element.css('height', 'auto').css('height', element[0].scrollHeight + (element[0].offsetHeight - element[0].clientHeight));
-                                    window.clearTimeout(timer);
-                                }
-                            }, 100);
+                        // Según el tipo ...
+                        switch (type) {
+                            case 'textarea':
+                                // Recalcula el tamaño del textarea
+                                var timer = window.setTimeout(function() {
+                                    if (element[0].scrollHeight > 0) {
+                                        element.css('height', 'auto').css('height', element[0].scrollHeight + (element[0].offsetHeight - element[0].clientHeight));
+                                        window.clearTimeout(timer);
+                                    }
+                                }, 100);
+                                break;
                         }
                     };
 
                     if (modelController) {
                         modelController.$parsers.push(function(value) {
                             validator(element, modelController);
+
+                            // Según el tipo ...
+                            switch (type) {
+                                case "date":
+                                case "time":
+                                case "datetime":
+                                    if (modelController.$viewValue)
+                                        value = moment(modelController.$viewValue, attrs.dateFormat).toDate();
+                                    break;
+                            }
+                            return value;
+                        });
+                        modelController.$formatters.push(function(value) {
+                            switch (type) {
+                                case "date":
+                                case "time":
+                                case "datetime":
+                                    if (value && angular.isDate(value))
+                                        value = moment(value).format(attrs.dateFormat);
+                                    break;
+                            }
                             return value;
                         });
                         scope.$watch(function() {
@@ -166,42 +190,35 @@ angular.module('plex').directive("plex", ['$injector', function($injector) {
                     var inputGroup;
                     switch (type) {
                         case "date":
-                            inputGroup = angular.element("<div class='input-group'>");
-                            element.before(inputGroup);
-                            element.detach();
-                            if (attrs.selectOnly) {
-                                element.attr('readonly', 'readonly');
-                                element.css({
-                                    cursor: "pointer"
-                                });
-                                element.on('click', function() {
-                                    angular.element(this).next().find(".btn").click();
-                                });
-                            }
-                            inputGroup.append(element);
-                            element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-calendar'></i></a></span>").on('click', function() {
-                                // element.removeAttr('readonly');
-                                element.focus();
-                                // element.attr('readonly', 'readonly');
-                            }));
-
-                            // Soluciona el bug de ng-readonly
-                            if (attrs.ngReadonly)
-                                scope.$watch(attrs.ngReadonly, function(value) {
-                                    if (value)
-                                        element.attr("disabled", "disabled");
-                                    else
-                                        element.removeAttr("disabled");
-                                });
-                            break;
                         case "time":
+                        case "datetime":
+                            element.bootstrapMaterialDatePicker({
+                                lang: 'es',
+                                format: attrs.dateFormat,
+                                time: type != 'date',
+                                date: type != 'time',
+                                okText: 'Seleccionar',
+                                cancelText: 'Cerrar',
+                                clearButton: false,
+                            });
+                            // Tweak calendar
+                            var calendar = angular.element("#" + element.attr("data-dtp"));
+                            calendar.find('.dtp-close').hide();
+                            calendar.find('.material-icons').each(function() {
+                                var $this = angular.element(this);
+                                $this.addClass('mdi mdi-' + $this.text().replace('_', '-'));
+                                $this.text('');
+                            });
+                            calendar.find('.dtp-btn-cancel').addClass('btn-default margin-right');
+                            calendar.find('.dtp-btn-ok').addClass('btn-primary');
+
+                            // Arma el grupo
                             inputGroup = angular.element("<div class='input-group'>");
                             element.before(inputGroup);
                             element.detach();
                             inputGroup.append(element);
                             element.addClass('form-control');
-                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-clock'></i></a></span>").on('click', function() {
+                            element.after(angular.element("<span class='input-group-btn'><a class='btn btn-default btn-flat' tabindex='-1'><i class='mdi mdi-" + ((type == "time") ? "clock" : "calendar") + "'></i></a></span>").on('click', function() {
                                 element.focus();
                             }));
 
