@@ -41,6 +41,14 @@ module.exports = function(grunt) {
                     'bower_components/angular-sanitize/angular-sanitize.js',
                     'js/src/patches/angular-locale_es-ar.js',
 
+                    // Other
+                    'bower_components/ocLazyLoad/dist/ocLazyLoad.min.js',
+                    'bower_components/angular-bindonce/bindonce.js',
+                    'bower_components/ng-file-upload/ng-file-upload.js',
+                    'bower_components/moment/moment.js',
+                    'bower_components/moment/locale/es.js',
+                    'bower_components/angular-jwt/dist/angular-jwt.js',
+
                     // UI
                     'bower_components/select2/dist/js/select2.full.js',
                     'bower_components/angular-strap/dist/modules/compiler.js',
@@ -68,14 +76,7 @@ module.exports = function(grunt) {
                     'bower_components/angular-strap/dist/modules/tab.js',
                     'bower_components/angular-strap/dist/modules/tab.tpl.js',
                     'bower_components/angular-strap/dist/modules/raf.js',
-
-                    // Other
-                    'bower_components/ocLazyLoad/dist/ocLazyLoad.min.js',
-                    'bower_components/angular-bindonce/bindonce.js',
-                    'bower_components/ng-file-upload/ng-file-upload.js',
-                    'bower_components/moment/moment.js',
-                    'bower_components/moment/locale/es.js',
-                    'bower_components/angular-jwt/dist/angular-jwt.js',
+                    'bower_components/bootstrap-material-datetimepicker/js/bootstrap-material-datetimepicker.js',
 
                     // Global
                     'js/src/global/modules/Global.js',
@@ -162,6 +163,7 @@ module.exports = function(grunt) {
                     'css/src/webfont-medical-icons/wfmi-style.css',
                     'bower_components/angular-motion/dist/angular-motion.css',
                     'bower_components/mdi/css/materialdesignicons.css',
+                    'bower_components/bootstrap-material-datetimepicker/css/bootstrap-material-datetimepicker.css',
                     '.tmp/paper.css',
                 ],
                 dest: 'css/dist/lib.paper.css',

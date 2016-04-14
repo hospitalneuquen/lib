@@ -1,11 +1,6 @@
 //
 // Bootstrap hacks
 //
-
-.btn {
-    outline: none !important;
-}
-
 textarea {
     resize: none;
 }
@@ -13,48 +8,31 @@ input[type=radio]:required {
     outline: none;
     box-shadow: none;
 }
-
-label.block {
-    margin-top: 10px;
-    display: block;
+.btn {
+    outline: none !important;
 }
-label.block:first-child {
-    margin-top: inherit;
-}
-
-.nav-tabs > li {
-    cursor: pointer;
-}
-
-.dropdown-menu{
+.dropdown-menu {
     z-index: 2000;
 }
-
 .dropdown-menu,
 .dropdown-menu > li > a {
     outline: none;
 }
-
-//:hover, .dropdown-menu > li > a:focus
-
 // Previene los textos grisados (que no se leen) cuando un item está seleccionado/resaltado
-.table tr.success .text-muted,
-.table tr.warning .text-muted,
-.list-group-item.active .text-muted,
 .list-group-item.active .small,
-.list-group-item.active SMALL {
+.list-group-item.active .text-muted,
+.list-group-item.active SMALL,
+.table tr.success .text-muted,
+.table tr.warning .text-muted {
     color: inherit;
 }
-
-.form-group .radio,
-.form-group .checkbox {
+.form-group .checkbox,
+.form-group .radio {
     margin-top: 0;
 }
-
 .form-group > .input-group {
     width: 100%;
 }
-
 //
 // Angular-Strap Hacks
 //
@@ -75,21 +53,43 @@ label.block:first-child {
         }
     }
 }
-
 // Icons
 // Permite espaciar los iconos y textos automáticamente
-[class^="mdi-"] + span,
-[class*="mdi-"] + span,
-[class^="mdi-"] + small,
-[class*="mdi-"] + small,
-[class^="icon-"] + span,
+[class*="icon-"] + small,
 [class*="icon-"] + span,
+[class*="mdi-"] + small,
+[class*="mdi-"] + span,
 [class^="icon-"] + small,
-[class*="icon-"] + small {
+[class^="icon-"] + span,
+[class^="mdi-"] + small,
+[class^="mdi-"] + span {
     margin-left: 0.4em;
 }
-
 .mdi {
     font-size: 1.5em;
     vertical-align: text-top;
+}
+[class^="icon-"] {
+    font-size: 1.3em;
+    vertical-align: text-bottom;
+}
+// Tabs
+.nav-tabs > li {
+    cursor: pointer;
+}
+// Navbar
+.navbar-inverse .navbar-text {
+    color: white;
+}
+.navbar-brand {
+    padding: 12.5px 15px;
+}
+
+// Animación de las tablas
+.table TR > TD {
+    -webkit-transition: background 300ms ease-in-out;
+    -moz-transition: background 300ms ease-in-out;
+    -ms-transition: background 300ms ease-in-out;
+    -o-transition: background 300ms ease-in-out;
+    transition: background 300ms ease-in-out;
 }
