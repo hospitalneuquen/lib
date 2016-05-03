@@ -10,8 +10,7 @@
 angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$window', 'jwtHelper', function($rootScope, $q, $http, $window, jwtHelper) {
     var self = {
         state: 'inactive', // Estado de la sesión: inactive, active, locked. Se inicializa en init().
-        id: null, // Identificador de la sesión. Se inicializa en init().
-        user: null, // Datos del usuario. Se inicializa en init().
+        user: null, // Datos del usuario. Se inicializa en login().
         permissions: null, // Permisos del usuario. Se inicializa en init().
         variables: null, // Variables asociadas al usuario. Se inicializa en init().
         settings: {
@@ -94,6 +93,7 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
                         var payload = jwtHelper.decodeToken(token);
 
                         self.user = {
+                            id: payload.id,
                             name: payload.name,
                             givenName: payload.given_name,
                             familyNane: payload.family_name,
