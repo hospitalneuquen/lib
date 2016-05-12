@@ -16,10 +16,16 @@ angular.module('plex').directive("plexTabs", [function() {
             // Functions
             var activate = function(index) {
                 try {
-                    lis.removeClass('active');
-                    divs.css('display', 'none');
-                    angular.element(lis[index]).addClass('active');
-                    angular.element(divs[index]).css('display', 'block');
+                    // if (angular.element(divs[index])){
+                        lis.removeClass('active');
+                        divs.css('display', 'none');
+                        angular.element(lis[index]).addClass('active');
+                        angular.element(divs[index]).css('display', 'block');
+
+                        if (angular.element(lis[index]).hasClass("disabled") || angular.element(lis[index]).attr("disabled")){
+                            angular.element(lis[index]).removeClass("disabled");
+                        }
+                    // }
                 } catch (e) {}
             };
 
@@ -27,12 +33,15 @@ angular.module('plex').directive("plexTabs", [function() {
             element.find("> UL").addClass("nav nav-tabs");
             lis.on("click", function() {
                 var $this = angular.element(this);
-                activate($this.index());
 
-                // Bind
-                scope.$apply(function() {
-                    controller.$setViewValue($this.index());
-                });
+                if (!$this.attr("disabled") && !$this.hasClass("disabled")){
+                    activate($this.index());
+
+                    // Bind
+                    scope.$apply(function() {
+                        controller.$setViewValue($this.index());
+                    });
+                }
             });
             // lis.each(function(i) {
             //     $mdInkRipple.attach(scope, angular.element(this), {
