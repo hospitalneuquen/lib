@@ -10,8 +10,11 @@ angular.module('plex').directive("plexTabs", [function() {
         restrict: "A",
         require: 'ngModel',
         link: function(scope, element, attrs, controller) {
-            var lis = element.find("> UL > LI");
-            var divs = element.find("> DIV");
+            // var lis = element.find("> UL > LI");
+            // var divs = element.find("> DIV");
+
+            var lis = (element.find("UL.nav-tabs > LI").length) ? element.find("UL.nav-tabs > LI") : element.find("> UL > LI") ;
+            var divs = (element.find("DIV.tab-content").length) ? element.find("DIV.tab-content") : element.find("> DIV");
 
             // Functions
             var activate = function(index) {
@@ -34,7 +37,7 @@ angular.module('plex').directive("plexTabs", [function() {
             lis.on("click", function() {
                 var $this = angular.element(this);
 
-                if (!$this.attr("disabled") && !$this.hasClass("disabled")){
+                if (!$this.attr("disabled")){ // || !$this.hasClass("disabled")
                     activate($this.index());
 
                     // Bind
@@ -43,6 +46,14 @@ angular.module('plex').directive("plexTabs", [function() {
                     });
                 }
             });
+
+            // lis.each(function(i){
+            //     console.log(lis[i]);
+            //     if (lis[i].attr("disabled")){
+            //         lis[i].addClass("disabled");
+            //     }
+            // });
+
             // lis.each(function(i) {
             //     $mdInkRipple.attach(scope, angular.element(this), {
             //         center: false,

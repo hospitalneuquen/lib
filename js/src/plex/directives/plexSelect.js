@@ -281,6 +281,9 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                 attrs.$observe('disabled', function(value) {
                     element.select2('enable', !value);
                 });
+                attrs.$observe('ng-disabled', function(value) {
+                    element.select2('enable', !value);
+                });
                 attrs.$observe('readonly', function(value) {
                     element.select2('readonly', !!value);
                 });
