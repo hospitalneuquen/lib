@@ -13,8 +13,9 @@ angular.module('plex').directive("plexTabs", [function() {
             // var lis = element.find("> UL > LI");
             // var divs = element.find("> DIV");
 
-            var lis = (element.find("UL.nav-tabs > LI").length) ? element.find("UL.nav-tabs > LI") : element.find("> UL > LI") ;
-            var divs = (element.find("DIV.tab-content").length) ? element.find("DIV.tab-content") : element.find("> DIV");
+            // var lis = (element.find("UL.nav-tabs > LI").length) ? element.find("UL.nav-tabs > LI") : element.find("> UL > LI") ;
+            var lis = (element.closest("UL.nav-tabs > LI").length) ? element.closest("UL.nav-tabs > LI") : element.find("> UL > LI") ;
+            var divs = (element.closest("DIV.tab-content").length) ? element.closest("DIV.tab-content") : element.find("> DIV");
 
             // Functions
             var activate = function(index) {
