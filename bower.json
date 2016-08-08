@@ -32,6 +32,7 @@
     "highcharts": "~4.2.3",
     "mdi": "^1.5.54",
     "select2": "~4.0.2",
-    "bootstrap-material-datetimepicker": "~2.5.3"
+    "bootstrap-material-datetimepicker": "~2.5.3",
+    "angular-ui-tinymce": "^0.0.16"
   }
 }

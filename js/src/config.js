@@ -21,6 +21,7 @@ var requiredModules = [
     // Other
     'pasvaz.bindonce',
     'ngFileUpload',
+    'ui.tinymce',
     //'textAngular',
     'angular-jwt',
     // Salud

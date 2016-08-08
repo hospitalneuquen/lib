@@ -78,6 +78,17 @@ module.exports = function(grunt) {
                     'bower_components/angular-strap/dist/modules/raf.js',
                     'bower_components/bootstrap-material-datetimepicker/js/bootstrap-material-datetimepicker.js',
 
+                    // tinymce editor wysiwyg
+                    'bower_components/tinymce-dist/tinymce.min.js',
+                    'bower_components/tinymce-dist/themes/modern/theme.min.js',
+                    'bower_components/angular-ui-tinymce/src/tinymce.js',
+                    // 'bower_components/tinymce-dist/tinymce.js',
+                    // 'bower_components/tinymce-dist/themes/modern/theme.js',
+                    // 'bower_components/tinymce-dist/plugins/link/plugin.js',
+                    // 'bower_components/tinymce-dist/plugins/image/plugin.js',
+                    // 'bower_components/tinymce-dist/plugins/code/plugin.js',
+                    // 'bower_components/angular-ui-tinymce/src/tinymce.js',
+
                     // Global
                     'js/src/global/modules/Global.js',
                     'js/src/global/services/Global.js',
@@ -221,6 +232,24 @@ module.exports = function(grunt) {
                 dest: 'js/dist',
                 expand: true
             },
+            tinymcetheme: {
+                expand: true,
+                cwd: 'bower_components/tinymce-dist/themes/modern/',
+                src: ['**'],
+                dest: 'js/dist/themes/modern/'
+            },
+            tinymceskin: {
+                expand: true,
+                cwd: 'bower_components/tinymce-dist/skins/',
+                src: ['**'],
+                dest: 'js/dist/skins/'
+            },
+            tinymcepluginlink: {
+                expand: true,
+                cwd: 'bower_components/tinymce-dist/plugins/',
+                src: ['**'],
+                dest: 'js/dist/plugins/'
+            }
         }
     });
 };
