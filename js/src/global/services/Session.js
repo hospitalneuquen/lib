@@ -96,8 +96,9 @@ angular.module('global').factory('Session', ['$rootScope', '$q', '$http', '$wind
                             id: payload.id,
                             name: payload.name,
                             givenName: payload.given_name,
-                            familyNane: payload.family_name,
+                            familyName: payload.family_name,
                             picture: payload.picture,
+                            avatar: (payload.avatar) ? payload.avatar : '',
                             username: payload.username,
                         };
                         self.variables = payload.scope.variables;

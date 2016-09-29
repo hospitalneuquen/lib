@@ -17,7 +17,7 @@
             </li>
         </ul> -->
         <span class="navbar-brand">
-            <i class="mdi mdi-arrow-left hover" ng-click="Plex.closeView()" xng-if="Plex.currentViewIndex > 0"></i>
+            <i class="mdi mdi-arrow-left hover" ng-click="Plex.closeView()" ng-if="Plex.currentViewIndex > 0"></i>
             <span>{{Plex.title}}</span>
         </span>
         <!-- Toolbar loader -->
@@ -31,7 +31,11 @@
         <div class="nav navbar-nav pull-right">
             <!-- <p class="navbar-text">{{Session.user.name}}</p>
             <button class="btn btn-default btn-flat"><i plex-actions="Plex.userActions"></i></button> -->
-            <p class="navbar-text">{{Session.user.name}} <i plex-actions="Plex.userActions"></i></p>
+            <p class="navbar-text">
+                <img ng-src="data:image/jpeg;base64,{{Session.user.avatar}}" class="img-circle" width="30" alt="Imagen {{Session.user.givenName}}" ng-if="Session.user.avatar"/>
+                <img ng-src="default-user-male.png" class="img-circle" width="30" alt="Imagen {{Session.user.givenName}}" ng-if="!Session.user.avatar"/>
+                {{Session.user.name}} <i plex-actions="Plex.userActions"></i>
+            </p>
         </ul>
         </div>
     </div>
