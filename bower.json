@@ -20,7 +20,7 @@
     "angular-animate": "~1.5.0",
     "angular-route": "~1.5.0",
     "angular-sanitize": "~1.5.0",
-    "angular-strap": "~2.3.8",
+    "angular-strap": "~2.3.9",
     "jquery": "2",
     "oclazyload": "ocLazyLoad#~1.0.9",
     "angular-bindonce": "~0.3.3",
@@ -33,6 +33,7 @@
     "mdi": "^1.5.54",
     "select2": "~4.0.2",
     "bootstrap-material-datetimepicker": "~2.5.3",
-    "angular-ui-tinymce": "^0.0.16"
+    "angular-ui-tinymce": "^0.0.16",
+    "angular-drag-scroll": "^0.2.1"
   }
 }

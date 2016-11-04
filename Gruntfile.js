@@ -89,6 +89,9 @@ module.exports = function(grunt) {
                     // 'bower_components/tinymce-dist/plugins/code/plugin.js',
                     // 'bower_components/angular-ui-tinymce/src/tinymce.js',
 
+                    // drag scroll
+                    'bower_components/angular-drag-scroll/src/ng-drag-scroll.js',
+
                     // Global
                     'js/src/global/modules/Global.js',
                     'js/src/global/services/Global.js',
