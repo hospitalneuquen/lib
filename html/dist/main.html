@@ -31,11 +31,16 @@
         <div class="nav navbar-nav pull-right">
             <!-- <p class="navbar-text">{{Session.user.name}}</p>
             <button class="btn btn-default btn-flat"><i plex-actions="Plex.userActions"></i></button> -->
-            <p class="navbar-text">
-                <img ng-src="data:image/jpeg;base64,{{Session.user.avatar}}" class="img-circle" width="30" alt="Imagen {{Session.user.givenName}}" ng-if="Session.user.avatar"/>
-                <img ng-src="default-user-male.png" class="img-circle" width="30" alt="Imagen {{Session.user.givenName}}" ng-if="!Session.user.avatar"/>
-                {{Session.user.name}} <i plex-actions="Plex.userActions"></i>
-            </p>
+            <div class="navbar-text navbar-session">
+                <img ng-src="data:image/jpeg;base64,{{Session.user.avatar}}" class="img-circle pull-left" width="35" alt="Imagen {{Session.user.givenName}}" ng-if="Session.user.avatar"/>
+                <img ng-src="default-user-male.png" class="img-circle" width="35 pull-left" alt="Imagen {{Session.user.givenName}}" ng-if="!Session.user.avatar"/>
+
+                <p class="pull-left">
+                    <span class="username">{{Session.user.name}}</span>
+                    <small class="rol celeste">{{Session.variables.prestaciones_workflow}}</small>
+                </p>
+                <i class="actions pull-right" plex-actions="Plex.userActions"></i>
+            </div>
         </ul>
         </div>
     </div>
