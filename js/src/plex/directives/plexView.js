@@ -5,6 +5,7 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
         transclude: 'element',
         compile: function(element, attr, linker) {
             return function(scope, $element, attr) {
+
                 function toggleViews(old, current) {
                     if (old)
                         old.element.css({
@@ -14,8 +15,6 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         display: 'block'
                     });
 
-                    // al nuevo que abrimos le agregamos
-                    // position: absolute; width: 80%; left: 10%; z-index: 1001; background: white;
 
                     // entre medio metemos
                     // <div class="backdrop" style="    background: rgba(238,238,238,.7); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;height: 100vh;    box-shadow: 1px 1px 10px #ccc;-moz-box-shadow:     box-shadow: 1px 1px 10px #ccc;"></div>
@@ -25,6 +24,7 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         // ocultamos nanvbar
                         $(".navbar.navbar-default").css("display", "none");
 
+                        // al nuevo que abrimos le agregamos
                         current.element.css({
                             position: "absolute",
                             width: "80%",
@@ -33,8 +33,8 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         });
 
                         old.element.css({
-                            display: 'block',
-                            position: 'fixed'
+                            display: 'block'
+                            , position: 'fixed'
                         });
                     }
 
@@ -57,7 +57,7 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
 
                         console.log(old);
                         current.element.css({
-                            position: "inherit"
+                            position: "fixed"
                         });
                     }
 
@@ -118,24 +118,27 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                                 // ocultamos nav-bar
                                 var modal = "";
 
-                                var modal_template = '<div class="im-modal" style="box-shadow: 5px 5px 20px #666;background: white;margin-bottom: 100px;">';
+                                var modal_template = '<div class="im-modal" style="box-shadow: 5px 5px 20px #666;background: white;margin-bottom: 100px;position:relative; z-index: 2000;">';
                                     modal_template += '<div class="im-modal-header" style="padding: 10px; border-bottom: 1px solid #eee; display: block; height: 60px;">';
-                                    modal_template += '<span class="" style="display: inline-block; padding: 5px 10px; font-weight: bold; text-transform: uppercase; color: cornflowerblue; font-size: 18px;">' + Plex.title + '</span>';
-                                    modal_template += '<button style="/* right: 10px; *//* position: absolute; *//* top: 10px; */background: none;border: none;font-weight: bold;font-size: 20px;height: 40px;width: 30px;float: right;" ng-click="Plex.closeView()">X</button>';
-                                modal_template += '</div>';
-                                modal_template += '<div class="im-modal-body" style="padding: 10px 20px;">' + template + '</div>';
-                                modal_template += '<div class="im-modal-footer" style="min-height: 60px;" >';
+                                        modal_template += '<span class="" style="display: inline-block; padding: 5px 10px; font-weight: bold; text-transform: uppercase; color: cornflowerblue; font-size: 18px;">' + Plex.title + '</span>';
+                                        modal_template += '<button style="/* right: 10px; *//* position: absolute; *//* top: 10px; */background: none;border: none;font-weight: bold;font-size: 20px;height: 40px;width: 30px;float: right;" ng-click="Plex.closeView()">X</button>';
+                                    modal_template += '</div>';
+
+                                    modal_template += '<div class="im-modal-body" style="padding: 10px 20px;">' + template + '</div>';
+                                    modal_template += '<div class="im-modal-footer" style="min-height: 60px;" >';
+                                    modal_template += '</div>';
                                 modal_template += '</div>';
 
-                                template = modal_template;
+                                var backdrop = '<div class="backdrop" ng-click="Plex.closeView()" style=" background: rgba(0,0,0,.5); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;height: 100vh; box-shadow: 1px 1px 10px #ccc;-moz-box-shadow: box-shadow: 1px 1px 10px #ccc;"></div>';
+
+                                template = modal_template + backdrop ;
 
                                 // creamos el backdrop
-                                var backdrop = '<div class="backdrop" style=" background: rgba(0,0,0,.5); position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;height: 100vh; box-shadow: 1px 1px 10px #ccc;-moz-box-shadow: box-shadow: 1px 1px 10px #ccc;"></div>';
 
                                 // Prepara el elemento
                                 clone.html(template);
                                 $element.after(clone);
-                                $element.before(backdrop);
+                                // $element.before(backdrop);
                                 view.element = clone;
                                 toggleViews(oldView, view);
 
@@ -185,6 +188,13 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         scope.$emit('$plex-closeView', gotoView);
                     });
                     */
+                });
+
+                // obtenemos el evento keyUp para detectar si presionamos la
+                // tecla escape, y llamamos a la funcion para cerrar el modal
+                jQuery(document).keyup(function(e){
+                    if (e.which == 27)
+                        Plex.closeView();
                 });
 
                 // Inicializa la primera página
