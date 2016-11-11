@@ -12,7 +12,9 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                             display: 'none'
                         });
                     current.element.css({
-                        display: 'block'
+                        display: 'block',
+                        position: "",
+                        width: ""
                     });
 
 
@@ -33,8 +35,9 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         });
 
                         old.element.css({
-                            display: 'block'
-                            , position: 'fixed'
+                            display: 'block',
+                            position: "fixed",
+                            width: "98%"
                         });
                     }
 
@@ -57,7 +60,7 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
 
                         console.log(old);
                         current.element.css({
-                            position: "fixed"
+                            // position: "fixed"
                         });
                     }
 
