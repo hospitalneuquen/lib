@@ -94,6 +94,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                                         return {
                                                             id: $option.val(),
                                                             text: $option.text()
+                                                            ,disabled: ($option.disabled) ? true : false
                                                         };
                                                 }
                                             }));
@@ -104,6 +105,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                                 return {
                                                     id: i.id,
                                                     text: viewMapper(scope, locals),
+                                                    disabled: (i.disabled) ? true : false
                                                 };
                                             }));
                                         }
@@ -184,6 +186,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                                             id: i.id,
                                                             text: viewMapper(scope, locals),
                                                             dataItem: i,
+                                                            disabled: (i.disabled) ? true : false
                                                         };
                                                     })
                                                 });
@@ -205,6 +208,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                                             value: $option.val(),
                                                             text: $option.text()
                                                         }
+                                                        ,disabled: ($option.disabled) ? true : false
                                                     });
                                                 }
                                             });
@@ -227,6 +231,7 @@ angular.module('plex').directive('plexSelect', ['$timeout', '$parse', '$q', 'Glo
                                                         id: i.id,
                                                         text: viewMapper(scope, locals),
                                                         dataItem: i,
+                                                        disabled: i.disabled
                                                     };
                                                 })
                                             });

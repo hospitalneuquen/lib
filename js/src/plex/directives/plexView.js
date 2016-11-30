@@ -58,7 +58,6 @@ angular.module('plex').directive("plexView", ['$rootScope', '$anchorScroll', '$c
                         // eliminamos el backdrop
                         $(".backdrop").remove();
 
-                        console.log(old);
                         current.element.css({
                             // position: "fixed"
                         });
